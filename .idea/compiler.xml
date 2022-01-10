@@ -6,11 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="cuda_test" />
+        <module name="thesis_code" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="cuda_test" target="17" />
+      <module name="thesis_code" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>

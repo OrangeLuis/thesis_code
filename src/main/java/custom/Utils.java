@@ -137,20 +137,22 @@ public class Utils {
         return linearObject;
     }
 
-    public void printLinearByteObject(char[] x, String name) {
+    public void printLinearByteObject(char[] x, String name, int m) {
         System.out.println("Matrix " + name + "\nLen: " + x.length);
         String output = "";
         int count = 0;
         for (Object o : x) {
             output = output + o + " ";
             count++;
-            if (count == x.length)
+            //if (count % m == 0)
+            if (count == m)
                 break;
+                //output = output + "\n";
         }
         System.out.println(output);
     }
 
-    public void printLinearFloatObject(float[] x, String name) {
+    public void printLinearFloatObject(float[] x, String name, int m) {
         System.out.println("Matrix " + name + "\nLen: " + x.length);
         String output = "";
         for (Object o : x) {

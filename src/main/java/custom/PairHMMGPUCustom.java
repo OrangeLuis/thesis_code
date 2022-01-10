@@ -5,9 +5,6 @@ import jcuda.Sizeof;
 import jcuda.driver.*;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 
 import static jcuda.driver.JCudaDriver.*;
@@ -126,13 +123,13 @@ public class PairHMMGPUCustom {
         float[] readsGCP = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.readsGCP);
 
 
-        pairHMMGPU.utils.printLinearByteObject(reads, "reads");
-        pairHMMGPU.utils.printLinearByteObject(haplotypes, "haplotypes");
+        pairHMMGPU.utils.printLinearByteObject(reads, "reads", m);
+        pairHMMGPU.utils.printLinearByteObject(haplotypes, "haplotypes", n);
 
-        pairHMMGPU.utils.printLinearFloatObject(readsIn, "ins");
-        pairHMMGPU.utils.printLinearFloatObject(readsDel, "dels");
-        pairHMMGPU.utils.printLinearFloatObject(readsQual, "qual");
-        pairHMMGPU.utils.printLinearFloatObject(readsGCP, "gcp");
+        pairHMMGPU.utils.printLinearFloatObject(readsIn, "ins", m);
+        pairHMMGPU.utils.printLinearFloatObject(readsDel, "dels", m);
+        pairHMMGPU.utils.printLinearFloatObject(readsQual, "qual", m);
+        pairHMMGPU.utils.printLinearFloatObject(readsGCP, "gcp", m);
 
         float[] results = pairHMMGPU.calculatePairHMM(reads, readsQual, readsIn, readsDel, readsGCP, haplotypes, beta,
                 epsilon, pairHMMGPU.paddedMaxReadLength, pairHMMGPU.paddedMaxHaplotypeLength, samples);
@@ -151,7 +148,7 @@ public class PairHMMGPUCustom {
         JCudaDriver.setExceptionsEnabled(true);
 
         // Create the PTX file by calling the NVCC
-        String ptxFileName = "src\\main\\java\\ComputeLikelihoods6.cubin";
+        String ptxFileName = "src\\main\\resources\\ComputeLikelihoods6.cubin";
 
         // Initialize the driver and create a context for the first device.
         cuInit(0);

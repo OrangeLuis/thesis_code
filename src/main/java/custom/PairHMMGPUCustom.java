@@ -148,7 +148,7 @@ public class PairHMMGPUCustom {
         JCudaDriver.setExceptionsEnabled(true);
 
         // Create the PTX file by calling the NVCC
-        String ptxFileName = "src\\main\\resources\\ComputeLikelihoods6.cubin";
+        String ptxFileName = "src\\main\\resources\\compiled_kernels\\ComputeLikelihoods6.cubin";
 
         // Initialize the driver and create a context for the first device.
         cuInit(0);

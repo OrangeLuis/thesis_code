@@ -35,12 +35,6 @@ public class PairHMMGPUCustomOld {
     private float beta = (float) 0.9;
     private float epsilon = 1 - beta;
 
-    private final float[][] match;
-    private final float[][] insertion;
-    private final float[][] deletion;
-    private final float[][] prior;
-    private final float[][] transition;
-
     private int paddedMaxReadLength, paddedMaxHaplotypeLength;
     private boolean initialized = false;
 
@@ -67,12 +61,6 @@ public class PairHMMGPUCustomOld {
 
         this.readMaxLength = utils.findMaxReadLength(this.reads);
         this.haplotypeMaxLength = utils.findMaxAlleleLength(this.haplotypes);
-
-        this.match = utils.generateEmptyMatrix(m, n);
-        this.insertion = utils.generateEmptyMatrix(m, n);
-        this.deletion = utils.generateEmptyMatrix(m, n);
-        this.prior = utils.generateEmptyMatrix(m, n);
-        this.transition = utils.generateEmptyMatrix(m, n);
     }
 
     public void initialize(int readMaxLength, int haplotypeMaxLength) {

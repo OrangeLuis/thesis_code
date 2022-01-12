@@ -1,0 +1,142 @@
+extern "C"
+__global__ void subComputation(char *readBases,
+                               float *readQuals,
+                               float *ins,
+                               float *dels,
+                               float *overGCP,
+                               char *alleleBases,
+                               float *prior,
+                               float *match,
+                               float *insertion,
+                               float *deletion,
+                               float *out,
+                               int samples,
+                               int readLenght,
+                               int haplotypeLenght,
+                               float beta,
+                               float epsilon)
+                               {
+
+    unsigned int x = threadIdx.x + blockIdx.x * blockDim.x;
+
+    int a = threadIdx.x;
+    int b = blockIdx.x;
+    int c = blockDim.x;
+
+    if (x == 0) {
+
+        //Print all READ BASES
+        for(int j = 0; j < samples; j++){
+            printf("\n\nREAD BASES blocco n %d \n\n", j);
+            for(int i = j*readLenght; i < readLenght * (j + 1); i++)
+                printf("%c ", readBases[i]);
+        }
+
+        //Print all HAPLOTYPE BASES
+        for(int j = 0; j < samples; j++){
+            printf("\n\nHAPLOTYPE BASES blocco n %d \n\n", j);
+            for(int i = j*haplotypeLenght; i < haplotypeLenght * (j + 1); i++)
+                printf("%c ", alleleBases[i]);
+        }
+
+        printf("\n\n");
+    }
+
+    //Print x, thread id, block id, block dim
+    if (x == 0 or x == 32) printf ("x : %d \na : %d \nb : %d \nc : %d \n", x, a, b, c);
+
+    //Inizialize first element of each column to zero
+    match[b * haplotypeLenght * readLenght] = 0;
+    insertion[a + b * haplotypeLenght * readLenght] = 0;
+    deletion[a + b * haplotypeLenght * readLenght] = 0;
+
+    //For each haplotype loop, it goes along the columns of the matrix
+    for(int i = -a + 1; i < haplotypeLenght; i++)
+    {
+        //While i < 0, do not do anything
+        if(i >= 0){
+
+            //Print read base and allele base if i >= 0
+            if (x == 0 && i == 1) printf ("read bases di %d: %c \nallele bases di %d: %c \n", x, readBases[x], (b*c+1), alleleBases[b*c+1]);
+
+            //If/Else to set the value of prior matrix
+            if(readBases[x] == alleleBases[b * c + i]){
+                if (x == 0) printf ("EQUAL! %d = %c - %d = %c\n", x, readBases[x], b * c + i, alleleBases[b * c + i]);
+
+                prior[i * c + a + b * haplotypeLenght * readLenght] = readQuals[x]/3;
+
+            }else{
+                if (x == 0) printf ("NOT EQUAL! %d = %c - %d = %c\n", x, readBases[x], b * c + i, alleleBases[b * c + i]);
+
+                prior[i * c + a + b * haplotypeLenght * readLenght] = 1 - readQuals[x];
+            }
+
+            //Print the value of prior matrix
+            if (x == 0 && i == 1) printf ("prior di %d: %4.2f \n", (i * c + a + b * haplotypeLenght * readLenght),
+                                prior[i * c + a + b * haplotypeLenght * readLenght]);
+
+            //If x is a thead corresponding to the first column of a matrix, inizialize the values
+            if(x % c == 0 || x == 0) {
+
+                match[readLenght * i + b * haplotypeLenght * readLenght] = 0;
+                insertion[readLenght * i + b * haplotypeLenght * readLenght] = 0;
+                deletion[readLenght * i + b * haplotypeLenght * readLenght] = (float)1/haplotypeLenght;
+
+                //Print of inizialized value only for loop index 1 of thread 0
+                if (x == 0 && i == 1) printf ("inside if modulo \n inizializing match di %d, %f \n inizializing insertion di %d, %f \n inizializing deletion di %d, %.6f \n",
+                                    (readLenght * i + b * haplotypeLenght * readLenght),
+                                    match[readLenght * i + b * haplotypeLenght * readLenght],
+                                    readLenght * i + b * haplotypeLenght * readLenght,
+                                    insertion[readLenght * i + b * haplotypeLenght * readLenght],
+                                    readLenght * i + b * haplotypeLenght * readLenght,
+                                    deletion[readLenght * i + b * haplotypeLenght * readLenght]);
+
+                }
+
+            //Else, for any other loop index, calculate the values
+            else {
+
+                match[i * c + a + b * haplotypeLenght * readLenght] =
+                    prior[i * c + a + b * haplotypeLenght * readLenght] *
+                    (
+                    ins[x] * match[(i - 1) * c + (a - 1) + b * haplotypeLenght * readLenght] +
+                    beta * insertion[(i - 1) * c + (a - 1) + b * haplotypeLenght * readLenght] +
+                    beta * deletion[(i - 1) * c + (a - 1) + b * haplotypeLenght * readLenght]
+                    );
+
+                insertion[i * c + a + b * haplotypeLenght * readLenght] =
+                    dels[x] * match[(i - 1) * c + a + b * haplotypeLenght * readLenght] +
+                    epsilon * insertion[(i - 1) * c + a + b * haplotypeLenght * readLenght];
+
+                deletion[i * c + a + b * haplotypeLenght * readLenght] =
+                    epsilon * match[i * c + (a - 1) + b * haplotypeLenght * readLenght] +
+                    epsilon * insertion[i * c + (a - 1) + b * haplotypeLenght * readLenght];
+
+                //Check if the thread 31 arrive to this point of the loop index 1
+                if (x == 31 && i == 1) printf ("inside else modulo \n thread %d \n match di %d, %f \n insertion di %d, %f \n deletion di %d, %.6f                                      \n", a,
+                                    (i * c + a + b * haplotypeLenght * readLenght),
+                                    match[i * c + a + b * haplotypeLenght * readLenght],
+                                    i * c + a + b * haplotypeLenght * readLenght,
+                                    insertion[i * c + a + b * haplotypeLenght * readLenght],
+                                    i * c + a + b * haplotypeLenght * readLenght,
+                                    deletion[i * c + a + b * haplotypeLenght * readLenght]);
+            }
+
+        }
+
+        //Check if synchthreads works without errors
+        if (x == 0 && i == 1) printf ("before syncthreads \n");
+
+        __syncthreads();
+
+        if (x == 0 && i == 1) printf ("synched \n");
+
+    }
+
+    //Write out result after the loop, the out result is the sum of last value of the column of both match and insertion matrix
+    out[x] = match[(haplotypeLenght - 1) * c + a + b * haplotypeLenght * readLenght] +
+            insertion[(haplotypeLenght - 1) * c + a + b * haplotypeLenght * readLenght];
+
+    //Print the value only for second block
+    //if (b == 1) printf ("out di %d: %4.10f \n", x, out[x]);
+}

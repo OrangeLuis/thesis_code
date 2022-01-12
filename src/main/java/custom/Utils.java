@@ -1,14 +1,21 @@
 package custom;
 
+import javax.sound.midi.Soundbank;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Utils {
 
     public Utils() {
 
     }
+
+
 
     public char[][] generateBasesMatrix(int num, int samples) {
         char[][] h = new char[samples][num];
@@ -147,7 +154,7 @@ public class Utils {
             //if (count % m == 0)
             if (count == m)
                 break;
-                //output = output + "\n";
+            //output = output + "\n";
         }
         System.out.println(output);
     }

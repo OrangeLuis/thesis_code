@@ -1,4 +1,4 @@
-package custom;
+package gpu_tests;
 
 import jcuda.Pointer;
 import jcuda.Sizeof;

@@ -1,48 +1,54 @@
 package custom;
 
+import custom.Dataset;
+import custom.Utils;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.*;
 
 import java.security.NoSuchAlgorithmException;
-
+import java.util.ArrayList;
 
 import static jcuda.driver.JCudaDriver.*;
-import static jcuda.driver.JCudaDriver.cuCtxSynchronize;
 
-public class PairHMMGPUCustom {
+public class PairHMMGPUCustomOld {
 
-    public final int m, n, samples;
+    private String kernel;
 
-    private final int readMaxLength;
-    private final int haplotypeMaxLength;
+    private int samples;
+    private int m;
+    private int n;
 
-    public char[][] reads;
-    public char[][] haplotypes;
+    private int readMaxLength = 0;
+    private int haplotypeMaxLength = 0;
 
-    public float[][] readsQual;
+    private char[][] reads;
+    private char[][] haplotypes;
 
-    public float[][] readsIn;
-    public float[][] readsDel;
-    public float[][] readsGCP;
+    private float[][] quals;
+    private float[][] ins;
+    private float[][] dels;
+    private float[][] gcps;
 
-    public float[][] match;
-    public float[][] insertion;
-    public float[][] deletion;
-    public float[][] prior;
-    public float[][] transition;
+    private Utils utils = new Utils();
 
-    public Utils utils = new Utils();
+    private float beta = (float) 0.9;
+    private float epsilon = 1 - beta;
 
+    private final float[][] match;
+    private final float[][] insertion;
+    private final float[][] deletion;
+    private final float[][] prior;
+    private final float[][] transition;
 
-    protected int paddedMaxReadLength, paddedMaxHaplotypeLength;
-    protected boolean initialized = false;
+    private int paddedMaxReadLength, paddedMaxHaplotypeLength;
+    private boolean initialized = false;
 
-    public PairHMMGPUCustom(int samples, int m, int n) {
-        /* number of read-haplotype couples */
+    public PairHMMGPUCustomOld(int samples, int m, int n) {
+        /* number of read-haplotype couples*/
         this.samples = samples;
 
-        /* read lenght */
+        /* read lenght*/
         this.m = m;
 
         /* haplotype lenght*/
@@ -53,11 +59,11 @@ public class PairHMMGPUCustom {
         this.reads = utils.generateBasesMatrix(m, samples);
         this.haplotypes = utils.generateBasesMatrix(n, samples);
 
-        this.readsQual = utils.generateQualMatrix(m, samples);
+        this.quals = utils.generateQualMatrix(m, samples);
 
-        this.readsIn = utils.generateProbabilityMatrix(m, samples);
-        this.readsDel = utils.generateProbabilityMatrix(m, samples);
-        this.readsGCP = utils.generateProbabilityMatrix(m, samples);
+        this.ins = utils.generateProbabilityMatrix(m, samples);
+        this.dels = utils.generateProbabilityMatrix(m, samples);
+        this.gcps = utils.generateProbabilityMatrix(m, samples);
 
         this.readMaxLength = utils.findMaxReadLength(this.reads);
         this.haplotypeMaxLength = utils.findMaxAlleleLength(this.haplotypes);
@@ -69,7 +75,7 @@ public class PairHMMGPUCustom {
         this.transition = utils.generateEmptyMatrix(m, n);
     }
 
-    private void initialize(int readMaxLength, int haplotypeMaxLength) {
+    public void initialize(int readMaxLength, int haplotypeMaxLength) {
         int x = readMaxLength;
 
         /* checks if readMaxLenght is multiple of 32 and set the new value of readMaxLenght*/
@@ -82,10 +88,10 @@ public class PairHMMGPUCustom {
             x = 32 * (y + 1);
 
             this.reads = utils.copyAndPadByteMatrix(this.reads, x);
-            this.readsIn = utils.copyAndPadFloatMatrix(this.readsIn, x);
-            this.readsDel = utils.copyAndPadFloatMatrix(this.readsDel, x);
-            this.readsQual = utils.copyAndPadFloatMatrix(this.readsQual, x);
-            this.readsGCP = utils.copyAndPadFloatMatrix(this.readsGCP, x);
+            this.ins = utils.copyAndPadFloatMatrix(this.ins, x);
+            this.dels = utils.copyAndPadFloatMatrix(this.dels, x);
+            this.quals = utils.copyAndPadFloatMatrix(this.quals, x);
+            this.gcps = utils.copyAndPadFloatMatrix(this.gcps, x);
         }
         this.paddedMaxReadLength = x;
 
@@ -104,24 +110,93 @@ public class PairHMMGPUCustom {
         this.initialized = true;
     }
 
+    public String getKernel() {
+        return kernel;
+    }
+
+    public int getSamples() {
+        return samples;
+    }
+
+    public int getM() {
+        return m;
+    }
+
+    public int getN() {
+        return n;
+    }
+
+    public int getReadMaxLength() {
+        return readMaxLength;
+    }
+
+    public int getHaplotypeMaxLength() {
+        return haplotypeMaxLength;
+    }
+
+    public char[][] getReads() {
+        return reads;
+    }
+
+    public char[][] getHaplotypes() {
+        return haplotypes;
+    }
+
+    public float[][] getQuals() {
+        return quals;
+    }
+
+    public float[][] getIns() {
+        return ins;
+    }
+
+    public float[][] getDels() {
+        return dels;
+    }
+
+    public float[][] getGcps() {
+        return gcps;
+    }
+
+    public Utils getUtils() {
+        return utils;
+    }
+
+    public float getBeta() {
+        return beta;
+    }
+
+    public float getEpsilon() {
+        return epsilon;
+    }
+
+    public int getPaddedMaxReadLength() {
+        return paddedMaxReadLength;
+    }
+
+    public int getPaddedMaxHaplotypeLength() {
+        return paddedMaxHaplotypeLength;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
     public static void main(String[] args) throws NoSuchAlgorithmException {
         int samples = 100;
         int m = 64;
         int n = 64;
-        float beta = (float) 0.9;
-        float epsilon = 1 - beta;
-        PairHMMGPUCustom pairHMMGPU = new PairHMMGPUCustom(samples, m, n);
+        PairHMMGPUCustomOld pairHMMGPU = new PairHMMGPUCustomOld(samples, m, n);
 
         pairHMMGPU.initialize(pairHMMGPU.readMaxLength, pairHMMGPU.haplotypeMaxLength);
 
         char[] reads = pairHMMGPU.utils.getLinearByteObject(pairHMMGPU.reads);
         char[] haplotypes = pairHMMGPU.utils.getLinearByteObject(pairHMMGPU.haplotypes);
 
-        float[] readsQual = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.readsQual);
-        float[] readsIn = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.readsIn);
-        float[] readsDel = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.readsDel);
-        float[] readsGCP = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.readsGCP);
-
+        float[] readsQual = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getQuals());
+        float[] readsIn = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getIns());
+        float[] readsDel = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getDels());
+        float[] readsGCP = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getGcps());
 
         pairHMMGPU.utils.printLinearByteObject(reads, "reads", m);
         pairHMMGPU.utils.printLinearByteObject(haplotypes, "haplotypes", n);
@@ -131,8 +206,8 @@ public class PairHMMGPUCustom {
         pairHMMGPU.utils.printLinearFloatObject(readsQual, "qual", m);
         pairHMMGPU.utils.printLinearFloatObject(readsGCP, "gcp", m);
 
-        float[] results = pairHMMGPU.calculatePairHMM(reads, readsQual, readsIn, readsDel, readsGCP, haplotypes, beta,
-                epsilon, pairHMMGPU.paddedMaxReadLength, pairHMMGPU.paddedMaxHaplotypeLength, samples);
+        float[] results = pairHMMGPU.calculatePairHMM(reads, readsQual, readsIn, readsDel, readsGCP, haplotypes, pairHMMGPU.getBeta(),
+                pairHMMGPU.getEpsilon(), pairHMMGPU.paddedMaxReadLength, pairHMMGPU.paddedMaxHaplotypeLength, samples);
 
         System.out.println("\n\nRESULTS\n");
         for (int j = 0; j < samples; j++) {
@@ -140,7 +215,7 @@ public class PairHMMGPUCustom {
         }
     }
 
-    private float[] calculatePairHMM(char[] reads, float[] readsQual, float[] readsIn, float[] readsDel,
+    public float[] calculatePairHMM(char[] reads, float[] readsQual, float[] readsIn, float[] readsDel,
                                      float[] readsGCP,
                                      char[] haplotypes, float beta, float epsilon, int paddedMaxReadLength,
                                      int paddedMaxHaplotypeLength, int samples) {
@@ -366,7 +441,7 @@ public class PairHMMGPUCustom {
             System.out.println("Invalid: readsMemoryLenght is " + readsMemoryLenght + "must be a multiple of 32");
         }
 
-        return new float[m];
+        return new float[1];
     }
 }
 

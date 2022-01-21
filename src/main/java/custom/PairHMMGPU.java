@@ -75,9 +75,10 @@ public class PairHMMGPU {
 
     private int paddedReadLength;
     private int paddedAlleleLength;
+    private int readSamples;
+    private int alleleSamples;
 
-
-    public PairHMMGPU(PairHMMPreparation pairHMMPreparation, String kernel){
+    public PairHMMGPU(PairHMMPreparation pairHMMPreparation, String kernel) {
 
         this.reads = this.getLinearObject(pairHMMPreparation.getReads());
         this.quals = this.getLinearObject(pairHMMPreparation.getQuals());
@@ -92,6 +93,8 @@ public class PairHMMGPU {
 
         this.paddedReadLength = pairHMMPreparation.getPaddedReadLength();
         this.paddedAlleleLength = pairHMMPreparation.getPaddedAlleleLength();
+        this.readSamples = calculateSamplesNumberForReads();
+        this.alleleSamples = calculateSamplesNumberForAlleles();
 
     }
 
@@ -101,7 +104,7 @@ public class PairHMMGPU {
             for (char[] chars : arrayList)
                 size = size + chars.length;
 
-        char[] result =  new char[size];
+        char[] result = new char[size];
         int index = 0;
 
         for (ArrayList<char[]> arrayList : arrayLists)
@@ -121,41 +124,41 @@ public class PairHMMGPU {
             output = output + o;
             count++;
             if (count % m == 0)
-            //if (count == m)
-              //  break;
+                //if (count == m)
+                //  break;
                 output = output + "\n";
         }
         System.out.println(output);
     }
 
-    public void calculatePercentage(){
+    public void calculatePercentage() {
 
         int countReads = 0;
         int countAlleles = 0;
 
-        for (char c : this.reads){
+        for (char c : this.reads) {
             if (c == 'X')
                 countReads++;
         }
 
-        for (char c : this.alleles){
+        for (char c : this.alleles) {
             if (c == 'X')
                 countAlleles++;
         }
-        float rp = (100 * countReads)/this.reads.length;
-        float ap = (100 * countAlleles)/this.alleles.length;
+        float rp = (100 * countReads) / this.reads.length;
+        float ap = (100 * countAlleles) / this.alleles.length;
         System.out.println("Percentage of X in Reads: " + rp + "\n");
         System.out.println("Percentage of X in Alleles: " + ap + "\n");
     }
 
     //da aggiustare
-/*
+
     public float[] calculatePairHMM() {
         // Enable exceptions and omit all subsequent error checks
         JCudaDriver.setExceptionsEnabled(true);
 
         // Create the PTX file by calling the NVCC
-        String ptxFileName = kernel;
+        String ptxFileName = this.kernel;
 
         // Initialize the driver and create a context for the first device.
         cuInit(0);
@@ -172,11 +175,11 @@ public class PairHMMGPU {
         CUfunction function = new CUfunction();
         cuModuleGetFunction(function, module, "subComputation");
 
-        // Total lenght of the operation
-
-        int readsMemoryLenght = paddedReadLength * samples;
-        int haplotypesMemoryLenght = paddedAlleleLength * samples;
-        int matrixElements = paddedReadLength * paddedAlleleLength * samples;
+        // Total lenght of the operations
+        int samples = this.readSamples * this.alleleSamples;
+        int readsMemoryLenght = this.paddedReadLength * this.readSamples;
+        int haplotypesMemoryLenght = this.paddedAlleleLength * this.alleleSamples;
+        int matrixElements = this.paddedReadLength * this.paddedAlleleLength * samples;
 
         CUdeviceptr priorMatrix = new CUdeviceptr();
         cuMemAlloc(priorMatrix, matrixElements * Sizeof.FLOAT);
@@ -201,20 +204,20 @@ public class PairHMMGPU {
 
 
         CUdeviceptr deviceInputReadQuals = new CUdeviceptr();
-        cuMemAlloc(deviceInputReadQuals, readsMemoryLenght * Sizeof.FLOAT);
-        cuMemcpyHtoD(deviceInputReadQuals, Pointer.to(quals), readsMemoryLenght * Sizeof.FLOAT);
+        cuMemAlloc(deviceInputReadQuals, readsMemoryLenght * Sizeof.CHAR);
+        cuMemcpyHtoD(deviceInputReadQuals, Pointer.to(quals), readsMemoryLenght * Sizeof.CHAR);
 
         CUdeviceptr deviceInputInsQual = new CUdeviceptr();
-        cuMemAlloc(deviceInputInsQual, readsMemoryLenght * Sizeof.FLOAT);
-        cuMemcpyHtoD(deviceInputInsQual, Pointer.to(ins), readsMemoryLenght * Sizeof.FLOAT);
+        cuMemAlloc(deviceInputInsQual, readsMemoryLenght * Sizeof.CHAR);
+        cuMemcpyHtoD(deviceInputInsQual, Pointer.to(ins), readsMemoryLenght * Sizeof.CHAR);
 
         CUdeviceptr deviceInputDelQual = new CUdeviceptr();
-        cuMemAlloc(deviceInputDelQual, readsMemoryLenght * Sizeof.FLOAT);
-        cuMemcpyHtoD(deviceInputDelQual, Pointer.to(dels), readsMemoryLenght * Sizeof.FLOAT);
+        cuMemAlloc(deviceInputDelQual, readsMemoryLenght * Sizeof.CHAR);
+        cuMemcpyHtoD(deviceInputDelQual, Pointer.to(dels), readsMemoryLenght * Sizeof.CHAR);
 
         CUdeviceptr deviceInputOverGCP = new CUdeviceptr();
-        cuMemAlloc(deviceInputOverGCP, readsMemoryLenght * Sizeof.FLOAT);
-        cuMemcpyHtoD(deviceInputOverGCP, Pointer.to(gcps), readsMemoryLenght * Sizeof.FLOAT);
+        cuMemAlloc(deviceInputOverGCP, readsMemoryLenght * Sizeof.CHAR);
+        cuMemcpyHtoD(deviceInputOverGCP, Pointer.to(gcps), readsMemoryLenght * Sizeof.CHAR);
 
 
         CUdeviceptr deviceOutput = new CUdeviceptr();
@@ -232,16 +235,20 @@ public class PairHMMGPU {
                 Pointer.to(insertionMatrix),
                 Pointer.to(deletionMatrix),
                 Pointer.to(deviceOutput),
-                Pointer.to(new int[]{samples}),
-                Pointer.to(new int[]{paddedReadLength}),
-                Pointer.to(new int[]{paddedAlleleLength}),
-                Pointer.to(new float[]{beta}),
-                Pointer.to(new float[]{epsilon})
+                Pointer.to(new int[]{this.readSamples}),
+                Pointer.to(new int[]{this.alleleSamples}),
+                Pointer.to(new int[]{this.paddedReadLength}),
+                Pointer.to(new int[]{this.paddedAlleleLength}),
+                Pointer.to(new float[]{this.beta}),
+                Pointer.to(new float[]{this.epsilon})
         );
+
         if (readsMemoryLenght % 32 == 0) {
             int blockSizeX = paddedReadLength;
             int grizSizeX = (int) Math.ceil((double) readsMemoryLenght / blockSizeX);
-            //JCudaDriver.cuCtxSetLimit(CUlimit.CU_LIMIT_PRINTF_FIFO_SIZE, 8192);
+
+            JCudaDriver.cuCtxSetLimit(CUlimit.CU_LIMIT_PRINTF_FIFO_SIZE, 8192);
+
             cuLaunchKernel(function,
                     grizSizeX, 1, 1,
                     blockSizeX, 1, 1,
@@ -270,5 +277,13 @@ public class PairHMMGPU {
 
         return new float[1];
     }
-*/
+
+    private int calculateSamplesNumberForReads() {
+        return 0;
+    }
+
+    private int calculateSamplesNumberForAlleles() {
+        return 0;
+    }
+
 }

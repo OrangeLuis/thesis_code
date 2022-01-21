@@ -1,71 +1,149 @@
 extern "C"
-__global__ void subComputation(char *reads, char *quals, char *ins, char *dels, char *gcps, char *alleles, 
-                               float *prior, float *match, float *insertion, float *deletion,
-                               float *out, 
-                               int samples, int readLenght, int haplotypeLenght, float beta, float epsilon) 
+__global__ void subComputation( char *reads, 
+                                char *quals, 
+                                char *ins, 
+                                char *dels, 
+                                char *gcps, 
+                                char *alleles, 
+                                float *prior,   
+                                float *match,   
+                                float *insertion, 
+                                float *deletion,
+                                float *out, 
+                                float *nrb,
+                                float *nab,
+                                float *mrnb,
+                                float *manb,
+                                float beta, 
+                                float epsilon) 
                                {
-    // Definition of thread variables                           
+    //Definition of thread variables                           
     unsigned int x = threadIdx.x + blockIdx.x * blockDim.x;
     
     int a = threadIdx.x; 
     int b = blockIdx.x;
     int c = blockDim.x;
+
+    int readLength = 0;
+    int haplotypeLength = 0;
+
+    //Caluculate rindex, aindex, readLength and haplotypeLength
+    int rindex = 0;
+    int aindex = 0;
+    
+    int flag = 1;
+    
+    int dataSize1 = sizeof(nab)/sizeof(nab[0]);
+    
+    int x_1 = x;
+    int lbr = 0;
+    int lba = 0;
+    int ubr = 0;
+    int uba = 0;
+    
+    for (int i = 0; i < dataSize1; i++){
+        ubr += nrb[i];
+        uba += nab[i];
+        for (int j = lba; j < uba; j++) {
+            
+            if (x_1 >= nrb[i] * mnrb[i]){
+                aindex += mnab[i];
+                x_1 -= nrb[i] * mnrb[i];
+            }
+            else{
+                haplotypeLength = mnab[i];
+                readLength = mnrb[i];
+                rindex += x_1;
+                flag1 = 0;
+                break;
+            }
+            
+        }
+        if (flag){
+        rindex += nrb[i] * mnrb[i];
+        lbr = ubr;
+        lba = uba;
+        }
+        else{
+            break;
+        }
+    }
     
     //Inizialize first element of each column to zero
-    match[a + b * haplotypeLenght * readLenght] = 0;
-    insertion[a + b * haplotypeLenght * readLenght] = 0;
-    deletion[a + b * haplotypeLenght * readLenght] = 0;
+    //Calculate column index for assignment
+    int first_index = a + b * haplotypeLength * readLength;
+    match[first_index] = 0;
+    insertion[first_index] = 0;
+    deletion[first_index] = 0;
     
     //For each haplotype loop, it goes along the columns of the matrix
-    for(int i = -a + 1; i < haplotypeLenght; i++)
+    for(int i = -a + 1; i < haplotypeLength; i++)
     {
+               
         //While i < 0, do not do anything but synchronize threads
-        if(i >= 0){
-            
-            //If/Else to set the value of prior matrix
-            if(readBases[x] == alleleBases[b * c + i]){
+        if(i >= 0)
+        {
+
+            //Calculate x index for assignment
+            int xindex = i * c + a + b * haplotypeLength * readLength;
+
+            if (readBases[x] != 'X')
+            {
+                               
+                //If/Else to set the value of prior matrix
+                if(readBases[x] == alleleBases[b * c + i])
+                {
+                    
+                    prior[xindex] = readQuals[x]/3;
                 
-                prior[i * c + a + b * haplotypeLenght * readLenght] = readQuals[x]/3;
-            
-            }else{
+                }
+                else
+                {
+                    
+                    prior[xindex] = 1 - readQuals[x];
+                }
+                    
+                //If x is a thead corresponding to the first column of a matrix, inizialize the values 
+                if(x % c == 0 || x == 0) 
+                {
+                    //Calculate column index for assignment
+                    int column_index = readLength * i + b * haplotypeLength * readLength;
                 
-                prior[i * c + a + b * haplotypeLenght * readLenght] = 1 - readQuals[x];
+                    match[column_index] = 0;
+                    insertion[column_index] = 0;
+                    deletion[column_index] = (float)1/haplotypeLength;
+                
+                //Else, for any other loop index, calculate the values
+                }
+                else
+                {
+                    //Calculate previous indexes for assignment
+                    int previjindex = (i - 1) * c + (a - 1) + b * haplotypeLength * readLength;
+                    int previindex = (i - 1) * c + a + b * haplotypeLength * readLength;
+                    int prevjindex = i * c + (a - 1) + b * haplotypeLength * readLength;
+                
+                    match[xindex] = prior[xindex] * (ins[x] * match[previjindex] + beta * insertion[previjindex] + beta * deletion[previjindex]);
+            
+                    insertion[xindex] = dels[x] * match[previindex] + epsilon * insertion[previindex];
+            
+                    deletion[xindex] = gcps[x] * match[prevjindex] + epsilon * insertion[prevjindex];
+                }
+                
             }
-                
-            //If x is a thead corresponding to the first column of a matrix, inizialize the values 
-            if(x % c == 0 || x == 0) {
-            
-                match[readLenght * i + b * haplotypeLenght * readLenght] = 0;
-                insertion[readLenght * i + b * haplotypeLenght * readLenght] = 0;
-                deletion[readLenght * i + b * haplotypeLenght * readLenght] = (float)1/haplotypeLenght;
-            
-            //Else, for any other loop index, calculate the values
-            else {
-            
-                match[i * c + a + b * haplotypeLenght * readLenght] = 
-                    prior[i * c + a + b * haplotypeLenght * readLenght] * 
-                    (
-                    ins[x] * match[(i - 1) * c + (a - 1) + b * haplotypeLenght * readLenght] + 
-                    beta * insertion[(i - 1) * c + (a - 1) + b * haplotypeLenght * readLenght] + 
-                    beta * deletion[(i - 1) * c + (a - 1) + b * haplotypeLenght * readLenght]
-                    );
-        
-                insertion[i * c + a + b * haplotypeLenght * readLenght] = 
-                    dels[x] * match[(i - 1) * c + a + b * haplotypeLenght * readLenght] + 
-                    epsilon * insertion[(i - 1) * c + a + b * haplotypeLenght * readLenght];
-        
-                deletion[i * c + a + b * haplotypeLenght * readLenght] = 
-                    epsilon * match[i * c + (a - 1) + b * haplotypeLenght * readLenght] + 
-                    epsilon * insertion[i * c + (a - 1) + b * haplotypeLenght * readLenght];
-            
+            else
+            {
+            match[xindex] = 0;
+            insertion[xindex] = 0;
+            deletion[xindex] = 0;
+            }
         }
         
         __syncthreads();
             
     }
     
+    int oindex = (haplotypeLength - 1) * c + a + b * haplotypeLength * readLength;
     //Write out result after the loop, the out result is the sum of last value of the column of both match and insertion matrix
-    out[x] = match[(haplotypeLenght - 1) * c + a + b * haplotypeLenght * readLenght] + 
-            insertion[(haplotypeLenght - 1) * c + a + b * haplotypeLenght * readLenght];
+    out[x] = match[oindex] + insertion[oindex];
             
 }

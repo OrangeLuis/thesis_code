@@ -16,7 +16,6 @@ public class Utils {
     }
 
 
-
     public char[][] generateBasesMatrix(int num, int samples) {
         char[][] h = new char[samples][num];
 

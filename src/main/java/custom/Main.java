@@ -4,7 +4,7 @@ public class Main {
 
     public static void main(String[] args) {
         String data = "test_data\\10s.in";
-        String kernel = "";
+        String kernel = "src\\main\\resources\\compiled_kernels\\subComputation.cubin";
 
         Dataset dataset = new Dataset();
         dataset.readDataset(data);
@@ -20,7 +20,9 @@ public class Main {
         pairHMMGPU.calculatePercentage();
 
         //pairHMMGPU.printLinearObject(pairHMMGPU.getReads(), "Reads", pairHMMGPU.getPaddedReadLength());
-        //float [] results = pairHMMGPU.calculatePairHMM();
+        float [] results = pairHMMGPU.calculatePairHMM();
+
+        System.out.println(results);
 
         /*
         int samples = 100;

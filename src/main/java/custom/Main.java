@@ -1,28 +1,36 @@
 package custom;
 
+import java.util.Arrays;
+
 public class Main {
 
     public static void main(String[] args) {
         String data = "test_data\\10s.in";
-        String kernel = "src\\main\\resources\\compiled_kernels\\subComputation.cubin";
+        String kernelName = "src\\main\\resources\\compiled_kernels\\subComputation.cubin";
+        String functionName = "subComputation";
 
         Dataset dataset = new Dataset();
         dataset.readDataset(data);
 
-        PairHMMPreparation pairHMMPrep = new PairHMMPreparation(dataset);
-        System.out.println(pairHMMPrep.getAlleleMaxLength());
-        System.out.println(pairHMMPrep.getReadMaxLength());
-        System.out.println(pairHMMPrep.getPaddedAlleleLength());
-        System.out.println(pairHMMPrep.getPaddedReadLength());
+        Preprocessing prep = new Preprocessing(dataset);
+
+        Kernel kernel = new Kernel(kernelName, functionName);
+
+        CUDAObj cuda = new CUDAObj(kernel);
 
 
-        PairHMMGPU pairHMMGPU = new PairHMMGPU(pairHMMPrep, kernel);
-        pairHMMGPU.calculatePercentage();
+        System.out.println(prep.getAlleleMaxLength());
+        System.out.println(prep.getReadMaxLength());
+        System.out.println(prep.getPaddedAlleleLength());
+        System.out.println(prep.getPaddedReadLength());
+
+
+        PairHMMGPU pairHMMGPU = new PairHMMGPU(prep, cuda);
 
         //pairHMMGPU.printLinearObject(pairHMMGPU.getReads(), "Reads", pairHMMGPU.getPaddedReadLength());
         float [] results = pairHMMGPU.calculatePairHMM();
 
-        System.out.println(results);
+        System.out.println(Arrays.toString(results));
 
         /*
         int samples = 100;
@@ -58,5 +66,7 @@ public class Main {
         }
         */
     }
+
+
 }
 

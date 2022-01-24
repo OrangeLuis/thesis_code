@@ -1,17 +1,11 @@
 package custom;
-
-import javax.sound.midi.Soundbank;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
-public class Utils {
+public class OldImplementationUtils {
 
-    public Utils() {
+    public OldImplementationUtils() {
 
     }
 

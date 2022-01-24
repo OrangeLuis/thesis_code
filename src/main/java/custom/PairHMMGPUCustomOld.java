@@ -1,13 +1,10 @@
 package custom;
 
-import custom.Dataset;
-import custom.Utils;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.*;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 
 import static jcuda.driver.JCudaDriver.*;
 
@@ -30,7 +27,7 @@ public class PairHMMGPUCustomOld {
     private float[][] dels;
     private float[][] gcps;
 
-    private Utils utils = new Utils();
+    private OldImplementationUtils utils = new OldImplementationUtils();
 
     private float beta = (float) 0.9;
     private float epsilon = 1 - beta;
@@ -146,7 +143,7 @@ public class PairHMMGPUCustomOld {
         return gcps;
     }
 
-    public Utils getUtils() {
+    public OldImplementationUtils getUtils() {
         return utils;
     }
 

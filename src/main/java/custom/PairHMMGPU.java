@@ -57,8 +57,10 @@ public class PairHMMGPU {
         final float beta = (float) 0.9;
         final float epsilon = (float) 0.1;
         // Define needed memory
-        int readsMemoryLength = paddedReadLength * readSamples;
-        int haplotypesMemoryLength = paddedAlleleLength * alleleSamples;
+        //int readsMemoryLength = paddedReadLength * readSamples;
+        int readsMemoryLength = reads.length;
+        //int haplotypesMemoryLength = paddedAlleleLength * alleleSamples;
+        int haplotypesMemoryLength = alleles.length;
         int matrixElements = paddedReadLength * paddedAlleleLength * samples;
 
         // Define BlockSize and GridSize
@@ -66,108 +68,61 @@ public class PairHMMGPU {
         int gridSizeX = (int) Math.ceil((double) readsMemoryLength / blockSizeX);
 
         // Inizialize device
-        cuda.inizialitation();
-        cuda.setBlockSize(blockSizeX);
-        cuda.setGridSize(gridSizeX);
+        cuda.inizialization();
+        cuda.setBlockSize(blockSizeX, 1, 1);
+        cuda.setGridSize(gridSizeX, 1, 1);
 
         // Set limit for possible prints by the kernel (this has debug purposes)
         int limit = 8192;
         cuda.setPrintLimit(limit);
 
+        // Create Texture Reference in memory for chars arrays
+        CUdeviceptr readsPtr = cuda.createLinearTexture(reads, Sizeof.CHAR);
+        CUdeviceptr qualsPtr = cuda.createLinearTexture(quals, Sizeof.CHAR);
+        CUdeviceptr insPtr = cuda.createLinearTexture(ins, Sizeof.CHAR);
+        CUdeviceptr delsPtr = cuda.createLinearTexture(dels, Sizeof.CHAR);
+        CUdeviceptr gcpsPtr = cuda.createLinearTexture(gcps, Sizeof.CHAR);
+        CUdeviceptr allelesPtr = cuda.createLinearTexture(alleles, Sizeof.CHAR);
 
         // Allocate memory for matrices
-        CUdeviceptr priorMatrix = new CUdeviceptr();
-        cuMemAlloc(priorMatrix, (long) matrixElements * Sizeof.FLOAT);
+        CUdeviceptr priorPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
+        CUdeviceptr matchPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
+        CUdeviceptr insertionPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
+        CUdeviceptr deletionPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
 
-        CUdeviceptr matchMatrix = new CUdeviceptr();
-        cuMemAlloc(matchMatrix, (long) matrixElements * Sizeof.FLOAT);
-
-        CUdeviceptr insertionMatrix = new CUdeviceptr();
-        cuMemAlloc(insertionMatrix, (long) matrixElements * Sizeof.FLOAT);
-
-        CUdeviceptr deletionMatrix = new CUdeviceptr();
-        cuMemAlloc(deletionMatrix, (long) matrixElements * Sizeof.FLOAT);
-
-        //Allocate memory for utility arrays and move to device
-        CUdeviceptr nrbInputArray = new CUdeviceptr();
-        cuMemAlloc(nrbInputArray, (long) nrb.length * Sizeof.FLOAT);
-        cuMemcpyHtoD(nrbInputArray, Pointer.to(nrb), (long) nrb.length * Sizeof.FLOAT);
-
-        CUdeviceptr nabInputArray = new CUdeviceptr();
-        cuMemAlloc(nabInputArray, (long) nab.length * Sizeof.FLOAT);
-        cuMemcpyHtoD(nabInputArray, Pointer.to(nab), (long) nrb.length * Sizeof.FLOAT);
-
-        CUdeviceptr mrnbInputArray = new CUdeviceptr();
-        cuMemAlloc(mrnbInputArray, (long) mrnb.length * Sizeof.FLOAT);
-        cuMemcpyHtoD(mrnbInputArray, Pointer.to(mrnb), (long) mrnb.length * Sizeof.FLOAT);
-
-        CUdeviceptr manbInputArray = new CUdeviceptr();
-        cuMemAlloc(manbInputArray, (long) manb.length * Sizeof.FLOAT);
-        cuMemcpyHtoD(manbInputArray, Pointer.to(manb), (long) manb.length * Sizeof.FLOAT);
-
-        // Allocate memory for data arrays and move to device
-        CUdeviceptr deviceInputReadBases = new CUdeviceptr();
-        cuMemAlloc(deviceInputReadBases, (long) readsMemoryLength * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputReadBases, Pointer.to(reads), (long) readsMemoryLength * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputAlleleBases = new CUdeviceptr();
-        cuMemAlloc(deviceInputAlleleBases, (long) haplotypesMemoryLength * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputAlleleBases, Pointer.to(alleles), (long) haplotypesMemoryLength * Sizeof.CHAR);
-
-
-        CUdeviceptr deviceInputReadQuals = new CUdeviceptr();
-        cuMemAlloc(deviceInputReadQuals, (long) readsMemoryLength * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputReadQuals, Pointer.to(quals), (long) readsMemoryLength * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputInsQual = new CUdeviceptr();
-        cuMemAlloc(deviceInputInsQual, (long) readsMemoryLength * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputInsQual, Pointer.to(ins), (long) readsMemoryLength * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputDelQual = new CUdeviceptr();
-        cuMemAlloc(deviceInputDelQual, (long) readsMemoryLength * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputDelQual, Pointer.to(dels), (long) readsMemoryLength * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputOverGCP = new CUdeviceptr();
-        cuMemAlloc(deviceInputOverGCP, (long) readsMemoryLength * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputOverGCP, Pointer.to(gcps), (long) readsMemoryLength * Sizeof.CHAR);
+        // Create Texture Reference in memory for utility arrays
+        CUdeviceptr nrbPtr = cuda.createLinearTexture(nrb, Sizeof.FLOAT);
+        CUdeviceptr nabPtr = cuda.createLinearTexture(nab, Sizeof.FLOAT);
+        CUdeviceptr mrnbPtr = cuda.createLinearTexture(mrnb, Sizeof.FLOAT);
+        CUdeviceptr manbPtr = cuda.createLinearTexture(manb, Sizeof.FLOAT);
 
         // Allocate memory for output
-        CUdeviceptr deviceOutput = new CUdeviceptr();
-        cuMemAlloc(deviceOutput, ((long) readsMemoryLength * Sizeof.FLOAT));
+        CUdeviceptr deviceOutput = cuda.allocateArray(readsMemoryLength, Sizeof.FLOAT);
 
         // Define Kernel Parameters
         Pointer kernelParameters = Pointer.to(
-                Pointer.to(deviceInputReadBases),
-                Pointer.to(deviceInputReadQuals),
-                Pointer.to(deviceInputInsQual),
-                Pointer.to(deviceInputDelQual),
-                Pointer.to(deviceInputOverGCP),
-                Pointer.to(deviceInputAlleleBases),
-                Pointer.to(priorMatrix),
-                Pointer.to(matchMatrix),
-                Pointer.to(insertionMatrix),
-                Pointer.to(deletionMatrix),
+                Pointer.to(readsPtr),
+                Pointer.to(qualsPtr),
+                Pointer.to(insPtr),
+                Pointer.to(delsPtr),
+                Pointer.to(gcpsPtr),
+                Pointer.to(allelesPtr),
+                Pointer.to(priorPtr),
+                Pointer.to(matchPtr),
+                Pointer.to(insertionPtr),
+                Pointer.to(deletionPtr),
                 Pointer.to(deviceOutput),
-                Pointer.to(nrbInputArray),
-                Pointer.to(nabInputArray),
-                Pointer.to(mrnbInputArray),
-                Pointer.to(manbInputArray),
+                Pointer.to(nrbPtr),
+                Pointer.to(nabPtr),
+                Pointer.to(mrnbPtr),
+                Pointer.to(manbPtr),
                 Pointer.to(deviceOutput),
                 Pointer.to(new float[]{beta}),
                 Pointer.to(new float[]{epsilon})
         );
 
-
-
-
-
         // Launch Kernel
-        cuLaunchKernel(cuda.getFunction(),
-                cuda.getGridSize(), 1, 1,
-                cuda.getBlockSize(), 1, 1,
-                0, null,
-                kernelParameters, null
-        );
+        cuda.launchKernel(kernelParameters);
 
         // Wait for finishing
         cuCtxSynchronize();

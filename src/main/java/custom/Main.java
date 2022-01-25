@@ -18,17 +18,9 @@ public class Main {
 
         CUDAObj cuda = new CUDAObj(kernel);
 
-
-        System.out.println(prep.getAlleleMaxLength());
-        System.out.println(prep.getReadMaxLength());
-        System.out.println(prep.getPaddedAlleleLength());
-        System.out.println(prep.getPaddedReadLength());
-
-
         PairHMMGPU pairHMMGPU = new PairHMMGPU(prep, cuda);
-
-        //pairHMMGPU.printLinearObject(pairHMMGPU.getReads(), "Reads", pairHMMGPU.getPaddedReadLength());
-        float [] results = pairHMMGPU.calculatePairHMM();
+        //prep.printLinearObject(prep.getReads(), "Reads", prep.getPaddedReadLength());
+        float[] results = pairHMMGPU.calculatePairHMM();
 
         System.out.println(Arrays.toString(results));
 

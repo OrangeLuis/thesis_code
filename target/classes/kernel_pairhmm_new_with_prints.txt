@@ -1,4 +1,8 @@
 extern "C"
+
+#include <stdio.h>
+#include <math.h>
+
 __global__ void subComputation( char *reads, 
                                 char *quals, 
                                 char *ins, 
@@ -12,8 +16,8 @@ __global__ void subComputation( char *reads,
                                 float *out, 
                                 float *nrb,
                                 float *nab,
-                                float *mrnb,
-                                float *manb,
+                                float *mnrb,
+                                float *mnab,
                                 float beta, 
                                 float epsilon) 
                                {
@@ -23,6 +27,9 @@ __global__ void subComputation( char *reads,
     int a = threadIdx.x; 
     int b = blockIdx.x;
     int c = blockDim.x;
+
+    //Print x, thread id, block id, block dim
+    if (x == 0 or x == 288) printf ("x : %d a : %d b : %d c : %d\n", x, a, b, c);
 
     int readLength = 0;
     int haplotypeLength = 0;
@@ -36,13 +43,10 @@ __global__ void subComputation( char *reads,
     int dataSize1 = sizeof(nab)/sizeof(nab[0]);
     
     int x_1 = x;
-    int lbr = 0;
     int lba = 0;
-    int ubr = 0;
     int uba = 0;
     
     for (int i = 0; i < dataSize1; i++){
-        ubr += nrb[i];
         uba += nab[i];
         for (int j = lba; j < uba; j++) {
             
@@ -61,7 +65,6 @@ __global__ void subComputation( char *reads,
         }
         if (flag){
         rindex += nrb[i] * mnrb[i];
-        lbr = ubr;
         lba = uba;
         }
         else{
@@ -69,6 +72,12 @@ __global__ void subComputation( char *reads,
         }
     }
     
+    //Print rindex aindex
+    if (x == 0 or x == 288) printf ("rindex : %d aindex : %d\n", rindex, aindex);
+
+    //Print paddedReadLength and paddedaHaplotypeLength
+    if (x == 0 or x == 288) printf ("paddedReadLength : %dpaddedHaplotypeLength : %d\n", readLength, haplotypeLength);
+
     //Inizialize first element of each column to zero
     //Calculate column index for assignment
     int first_index = a + b * haplotypeLength * readLength;
@@ -87,20 +96,20 @@ __global__ void subComputation( char *reads,
             //Calculate x index for assignment
             int xindex = i * c + a + b * haplotypeLength * readLength;
 
-            if (readBases[rindex] != 'X')
+            if (reads[rindex] != 'X')
             {
                                
                 //If/Else to set the value of prior matrix
-                if(readBases[rindex] == alleleBases[aindex + i])
+                if(reads[rindex] == alleles[aindex + i])
                 {
                     
-                    prior[xindex] = readQuals[rindex]/3;
+                    prior[xindex] = (1 - pow(10, -(((int) quals[rindex] - 33)/10)))/3;
                 
                 }
                 else
                 {
                     
-                    prior[xindex] = 1 - readQuals[rindex];
+                    prior[xindex] = 1 - (1 - pow(10, -(((int) quals[rindex] - 33)/10)));
                 }
                     
                 //If x is a thead corresponding to the first column of a matrix, inizialize the values 
@@ -121,12 +130,16 @@ __global__ void subComputation( char *reads,
                     int previjindex = (i - 1) * c + (a - 1) + b * haplotypeLength * readLength;
                     int previindex = (i - 1) * c + a + b * haplotypeLength * readLength;
                     int prevjindex = i * c + (a - 1) + b * haplotypeLength * readLength;
+
+                    float ins_x = (1 - pow(10, -(((int) ins[x] - 33)/10)));
+                    float dels_x = (1 - pow(10, -(((int) dels[x] - 33)/10)));
+                    float gcps_x = (1 - pow(10, -(((int) gcps[x] - 33)/10)));
                 
-                    match[xindex] = prior[xindex] * (ins[x] * match[previjindex] + beta * insertion[previjindex] + beta * deletion[previjindex]);
+                    match[xindex] = prior[xindex] * (ins_x * match[previjindex] + beta * insertion[previjindex] + beta * deletion[previjindex]);
             
-                    insertion[xindex] = dels[x] * match[previindex] + epsilon * insertion[previindex];
+                    insertion[xindex] = dels_x * match[previindex] + epsilon * insertion[previindex];
             
-                    deletion[xindex] = gcps[x] * match[prevjindex] + epsilon * insertion[prevjindex];
+                    deletion[xindex] = gcps_x * match[prevjindex] + epsilon * insertion[prevjindex];
                 }
                 
             }

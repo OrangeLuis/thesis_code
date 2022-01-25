@@ -19,6 +19,7 @@ public class Preprocessing {
     private int readMaxLength;
     private int alleleMaxLength;
     private int paddedReadLength;
+    private int paddedAlleleLength;
 
     private char[] reads;
     private char[] quals;
@@ -32,6 +33,31 @@ public class Preprocessing {
     private int[] mrnb;
     private int[] manb;
 
+    private int samples;
+    private int readSamples;
+    private int alleleSamples;
+
+    private enum Type {
+        Reads,
+        Alleles
+    }
+
+    public Preprocessing(Dataset dataset) {
+        this.dataset = dataset;
+
+        this.arrayListsReads = dataset.getReads();
+        this.arrayListsQuals = dataset.getQuals();
+        this.arrayListsIns = dataset.getIns();
+        this.arrayListsDels = dataset.getDels();
+        this.arrayListsGcps = dataset.getGcps();
+        this.arrayListsAlleles = dataset.getAlleles();
+
+        this.utils = dataset.getUtils();
+
+        this.initialize();
+
+    }
+
     public int getSamples() {
         return samples;
     }
@@ -43,11 +69,6 @@ public class Preprocessing {
     public int getAlleleSamples() {
         return alleleSamples;
     }
-
-    private int samples;
-    private int readSamples;
-    private int alleleSamples;
-
 
     public char[] getReads() {
         return reads;
@@ -89,62 +110,91 @@ public class Preprocessing {
         return paddedAlleleLength;
     }
 
-    private int paddedAlleleLength;
-
-    private enum Type {
-        Reads,
-        Alleles
+    public int[] getNrb() {
+        return nrb;
     }
 
-    public Preprocessing(Dataset dataset) {
-        this.dataset = dataset;
+    public int[] getNab() {
+        return nab;
+    }
 
-        this.arrayListsReads = dataset.getReads();
-        this.arrayListsQuals = dataset.getQuals();
-        this.arrayListsIns = dataset.getIns();
-        this.arrayListsDels = dataset.getDels();
-        this.arrayListsGcps = dataset.getGcps();
-        this.arrayListsAlleles = dataset.getAlleles();
+    public int[] getMrnb() {
+        return mrnb;
+    }
 
-        this.utils = dataset.getUtils();
-
-        this.initialize();
-
+    public int[] getManb() {
+        return manb;
     }
 
     private void initialize() {
-        this.readMaxLength = this.findMaxLength(Type.Reads);
-        this.alleleMaxLength = this.findMaxLength(Type.Alleles);
+        this.readMaxLength = findMaxLength(Type.Reads);
+        this.alleleMaxLength = findMaxLength(Type.Alleles);
 
         if (readMaxLength == -1 || alleleMaxLength == -1) {
-            System.out.println("Empty data! Cannot find readMaxLength");
+            System.out.println("Empty data! Cannot find MaxLength");
             return;
         }
+
+        this.setNrbNab();
+        this.setMrnbManb();
 
         this.paddedReadLength = checkMultiple(readMaxLength);
         this.paddedAlleleLength = checkMultiple(alleleMaxLength);
 
-        this.reads = this.getLinearObject(padArray(this.arrayListsReads, paddedReadLength));
-        this.quals = this.getLinearObject(padArray(this.arrayListsQuals, paddedReadLength));
-        this.ins = this.getLinearObject(padArray(this.arrayListsIns, paddedReadLength));
-        this.dels = this.getLinearObject(padArray(this.arrayListsDels, paddedReadLength));
-        this.gcps = this.getLinearObject(padArray(this.arrayListsGcps, paddedReadLength));
-        this.alleles = this.getLinearObject(padArray(this.arrayListsAlleles, paddedAlleleLength));
+        this.reads = getLinearObject(padArray(arrayListsReads, mrnb));
+        this.quals = getLinearObject(padArray(arrayListsQuals, mrnb));
+        this.ins = getLinearObject(padArray(arrayListsIns, mrnb));
+        this.dels = getLinearObject(padArray(arrayListsDels, mrnb));
+        this.gcps = getLinearObject(padArray(arrayListsGcps, mrnb));
+        this.alleles = getLinearObject(padArray(arrayListsAlleles, manb));
 
-        this.setUtils();
+        /*
+        this.paddedReadLength = checkMultiple(readMaxLength);
+        this.paddedAlleleLength = checkMultiple(alleleMaxLength);
+
+        this.reads = this.getLinearObject(this.arrayListsReads);
+        this.quals = this.getLinearObject(this.arrayListsQuals);
+        this.ins = this.getLinearObject(this.arrayListsIns);
+        this.dels = this.getLinearObject(this.arrayListsDels);
+        this.gcps = this.getLinearObject(this.arrayListsGcps);
+        this.alleles = this.getLinearObject(this.arrayListsAlleles);
+        */
 
         this.calculateSamples();
         this.calculatePercentage();
-
     }
 
-    private ArrayList<ArrayList<char[]>> padArray(ArrayList<ArrayList<char[]>> arrayLists, int padding) {
+    private void setMrnbManb() {
+        int[] mrnb = new int[this.utils.size()];
+        int[] manb = new int[this.utils.size()];
+        for (int i = 0; i < this.utils.size(); i++) {
+            mrnb[i] = 0;
+            manb[i] = 0;
+
+            for (char[] chars : arrayListsReads.get(i)) {
+                if (chars.length > mrnb[i])
+                    mrnb[i] = chars.length;
+            }
+
+            for (char[] chars : arrayListsAlleles.get(i)) {
+                if (chars.length > manb[i])
+                    manb[i] = chars.length;
+            }
+
+        }
+        this.mrnb = mrnb;
+        this.manb = manb;
+    }
+
+    private ArrayList<ArrayList<char[]>> padArray(ArrayList<ArrayList<char[]>> arrayLists, int[] mxnb) {
         ArrayList<ArrayList<char[]>> shallow = new ArrayList<>();
+        int count = 0;
         for (ArrayList<char[]> arrayList : arrayLists) {
             ArrayList<char[]> token = new ArrayList<>();
+            int m = getWarpMultiple(mxnb[count]);
             for (char[] chars : arrayList) {
-                char[] array = new char[padding];
-                for (int i = 0; i < padding; i++) {
+                char[] array = new char[m];
+                for (int i = 0; i < m; i++) {
                     if (i < chars.length)
                         array[i] = chars[i];
                     else
@@ -153,8 +203,18 @@ public class Preprocessing {
                 token.add(array);
             }
             shallow.add(token);
+            mxnb[count] = m;
+            count++;
         }
         return shallow;
+    }
+
+    private int getWarpMultiple(int i) {
+        int warpDim = 32;
+        if (i % warpDim == 0)
+            return warpDim * i/warpDim;
+        else
+            return warpDim * (i/warpDim + 1);
     }
 
     private int findMaxLength(Type type) {
@@ -189,23 +249,7 @@ public class Preprocessing {
         }
     }
 
-    public int[] getNrb() {
-        return nrb;
-    }
-
-    public int[] getNab() {
-        return nab;
-    }
-
-    public int[] getMrnb() {
-        return mrnb;
-    }
-
-    public int[] getManb() {
-        return manb;
-    }
-
-    private void setUtils() {
+    private void setNrbNab() {
         int[] nrb = new int[this.utils.size()];
         int[] nab = new int[this.utils.size()];
         int[] mrnb = new int[this.utils.size()];

@@ -1,8 +1,10 @@
-package custom;
+package pairHMM;
 
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.*;
+import pairHMM.newGPU.CUDAObj;
+import pairHMM.newGPU.Preprocessing;
 
 import static jcuda.driver.JCudaDriver.*;
 
@@ -69,8 +71,8 @@ public class PairHMMGPU {
 
         // Inizialize device
         cuda.inizialization();
-        cuda.setBlockSize(blockSizeX);
-        cuda.setGridSize(gridSizeX);
+        cuda.setBlockSize(blockSizeX, 1, 1);
+        cuda.setGridSize(gridSizeX, 1, 1);
 
         // Set limit for possible prints by the kernel (this has debug purposes)
         int limit = 8192;
@@ -161,12 +163,15 @@ public class PairHMMGPU {
 
 
         // Launch Kernel
+
+        /*
         cuLaunchKernel(cuda.getFunction(),
                 cuda.getGridSize(), 1, 1,
                 cuda.getBlockSize(), 1, 1,
                 0, null,
                 kernelParameters, null
         );
+        */
 
         // Wait for finishing
         cuCtxSynchronize();

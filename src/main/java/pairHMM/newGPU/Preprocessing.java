@@ -36,6 +36,7 @@ public class Preprocessing {
     private int[] manb;
 
     private int samples;
+    private int oldSamples;
     private int readSamples;
     private int alleleSamples;
 
@@ -55,6 +56,7 @@ public class Preprocessing {
         this.arrayListsAlleles = dataset.getAlleles();
 
         this.utils = dataset.getUtils();
+        this.oldSamples = dataset.getSamples();
 
         this.initialize();
 
@@ -62,6 +64,10 @@ public class Preprocessing {
 
     public int getSamples() {
         return samples;
+    }
+
+    public int getOldSamples() {
+        return oldSamples;
     }
 
     public int getReadSamples() {
@@ -140,8 +146,11 @@ public class Preprocessing {
         this.setNrbNab();
         this.setMrnbManb();
 
+        /*
+
         this.paddedReadLength = checkMultiple(readMaxLength);
         this.paddedAlleleLength = checkMultiple(alleleMaxLength);
+
 
         this.reads = getLinearObject(padArray(arrayListsReads, mrnb));
         this.quals = getLinearObject(padArray(arrayListsQuals, mrnb));
@@ -149,6 +158,18 @@ public class Preprocessing {
         this.dels = getLinearObject(padArray(arrayListsDels, mrnb));
         this.gcps = getLinearObject(padArray(arrayListsGcps, mrnb));
         this.alleles = getLinearObject(padArray(arrayListsAlleles, manb));
+
+         */
+
+        this.paddedReadLength = readMaxLength;
+        this.paddedAlleleLength = alleleMaxLength;
+
+        this.reads = getLinearObject(arrayListsReads);
+        this.quals = getLinearObject(arrayListsQuals);
+        this.ins = getLinearObject(arrayListsIns);
+        this.dels = getLinearObject(arrayListsDels);
+        this.gcps = getLinearObject(arrayListsGcps);
+        this.alleles = getLinearObject(arrayListsAlleles);
 
         /*
         this.paddedReadLength = checkMultiple(readMaxLength);
@@ -287,17 +308,23 @@ public class Preprocessing {
         return result;
     }
 
-    public void printLinearObject(char[] x, String name, int m) {
+    public void printLinearObject(char[] x, String name, int m, int samples) {
         System.out.println(name + " Len: " + x.length);
         String output = "";
         int count = 0;
+        int scount = 0;
         for (char o : x) {
             output = output + o;
             count++;
-            if (count % m == 0)
+            if (count % m == 0){
+                scount++;
                 //if (count == m)
                 //  break;
                 output = output + "\n";
+            }
+
+            if (scount == samples)
+                break;
         }
         System.out.println(output);
     }

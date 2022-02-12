@@ -1,6 +1,7 @@
 package pairHMM.newGPU;
 
 import jcuda.Pointer;
+import jcuda.Sizeof;
 import jcuda.driver.*;
 import pairHMM.newGPU.Kernel;
 
@@ -80,6 +81,14 @@ public class CUDAObj {
     public CUdeviceptr allocateArray(int i, int memoryDim) {
         CUdeviceptr pointer = new CUdeviceptr();
         cuMemAlloc(pointer, (long) i * memoryDim);
+        return pointer;
+    }
+
+    public CUdeviceptr allocateAndMoveArray(char[] data, int i, int memoryDim) {
+        CUdeviceptr pointer = new CUdeviceptr();
+        cuMemAlloc(pointer, (long) i * memoryDim);
+        cuMemcpyHtoD(pointer, Pointer.to(data), i * memoryDim);
+
         return pointer;
     }
 

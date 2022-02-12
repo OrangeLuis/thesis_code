@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public class Dataset {
 
     private String name;
+    private int samples;
 
     private ArrayList<String> utils = new ArrayList<>();
     private ArrayList<char[]> dataset = new ArrayList<>();
@@ -85,6 +86,7 @@ public class Dataset {
         try {
             reader = new BufferedReader(new FileReader(name));
             String line = reader.readLine();
+            int s = 0;
 
             while (line != null) {
                 this.utils.add(line);
@@ -112,6 +114,7 @@ public class Dataset {
                             d.add(strings[3].toCharArray());
                             g.add(strings[4].toCharArray());
                         }
+                        s++;
                     }
                 }
 
@@ -124,6 +127,7 @@ public class Dataset {
 
                 line = reader.readLine();
             }
+            samples = s / 2;
         } catch (Exception e) {
             System.out.println("ERROR WHILE READING FILE \n");
         }
@@ -166,6 +170,10 @@ public class Dataset {
                 System.out.println(output + "\n");
             }
         }
+    }
+
+    public int getSamples() {
+        return samples;
     }
 
 }

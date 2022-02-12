@@ -3,37 +3,31 @@ package pairHMM.customGPU;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.*;
-import pairHMM.newGPU.Dataset;
+import pairHMM.newGPU.CUDAObj;
 import pairHMM.newGPU.Preprocessing;
 
-import java.security.NoSuchAlgorithmException;
-
 import static jcuda.driver.JCudaDriver.*;
+import static pairHMM.MainLoadDatasetAndCompareCustom.debug_flag;
+import static pairHMM.MainLoadDatasetAndCompareCustom.print;
 
 public class PairHMMGPUCustom {
 
-    private final String functionName;
-    private String kernel;
+    private final CUDAObj cuda;
 
-    private int samples;
-    private int m;
-    private int n;
+    private final int samples;
+    private final int m;
+    private final int n;
 
-    private char[] reads;
-    private char[] alleles;
+    private final char[] reads;
+    private final char[] alleles;
 
-    private char[] quals;
-    private char[] ins;
-    private char[] dels;
-    private char[]gcps;
+    private final char[] quals;
+    private final char[] ins;
+    private final char[] dels;
+    private final char[] gcps;
 
-    private float beta = (float) 0.9;
-    private float epsilon = 1 - beta;
-
-
-    public PairHMMGPUCustom(String kernel, String functionName, Preprocessing prep){
-        this.kernel = kernel;
-        this.functionName = functionName;
+    public PairHMMGPUCustom(Preprocessing prep, CUDAObj cuda) {
+        this.cuda = cuda;
 
         this.reads = prep.getReads();
         this.alleles = prep.getAlleles();
@@ -45,167 +39,121 @@ public class PairHMMGPUCustom {
 
         this.m = prep.getPaddedReadLength();
         this.n = prep.getPaddedAlleleLength();
-        this.samples = prep.getSamples();
+        this.samples = prep.getOldSamples();
 
-    }
-
-    public static void main(String[] args) throws NoSuchAlgorithmException {
-        /*
-        int samples = 100;
-        int m = 64;
-        int n = 64;
-        PairHMMGPUCustom pairHMMGPU = new PairHMMGPUCustom(samples, m, n);
-
-        pairHMMGPU.initialize(pairHMMGPU.readMaxLength, pairHMMGPU.haplotypeMaxLength);
-
-        char[] reads = pairHMMGPU.utils.getLinearByteObject(pairHMMGPU.reads);
-        char[] haplotypes = pairHMMGPU.utils.getLinearByteObject(pairHMMGPU.haplotypes);
-
-        float[] readsQual = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getQuals());
-        float[] readsIn = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getIns());
-        float[] readsDel = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getDels());
-        float[] readsGCP = pairHMMGPU.utils.getLinearFloatObject(pairHMMGPU.getGcps());
-
-        pairHMMGPU.utils.printLinearByteObject(reads, "reads", m);
-        pairHMMGPU.utils.printLinearByteObject(haplotypes, "haplotypes", n);
-
-        pairHMMGPU.utils.printLinearFloatObject(readsIn, "ins", m);
-        pairHMMGPU.utils.printLinearFloatObject(readsDel, "dels", m);
-        pairHMMGPU.utils.printLinearFloatObject(readsQual, "qual", m);
-        pairHMMGPU.utils.printLinearFloatObject(readsGCP, "gcp", m);
-
-        float[] results = pairHMMGPU.calculatePairHMM(reads, readsQual, readsIn, readsDel, readsGCP, haplotypes, pairHMMGPU.getBeta(),
-                pairHMMGPU.getEpsilon(), pairHMMGPU.paddedMaxReadLength, pairHMMGPU.paddedMaxHaplotypeLength, samples);
-
-        System.out.println("\n\nRESULTS\n");
-        for (int j = 0; j < samples; j++) {
-            System.out.println("Result sample n°" + j + ": " + results[j]);
-        }
-
-         */
     }
 
     public float[] calculatePairHMM() {
-        // Enable exceptions and omit all subsequent error checks
-        JCudaDriver.setExceptionsEnabled(true);
+        float beta = (float) 0.9;
+        float epsilon = 1 - beta;
 
-        // Create the PTX file by calling the NVCC
-        String ptxFileName = kernel;
-
-        // Initialize the driver and create a context for the first device.
-        cuInit(0);
-        CUdevice device = new CUdevice();
-        cuDeviceGet(device, 0);
-        CUcontext context = new CUcontext();
-        cuCtxCreate(context, 0, device);
-
-        // Load the ptx file.
-        CUmodule module = new CUmodule();
-        cuModuleLoad(module, ptxFileName);
-
-        // Obtain a function pointer to the "add" function.
-        CUfunction function = new CUfunction();
-        cuModuleGetFunction(function, module, functionName);
-
-        // Total lenght of the operation
-        int readsMemoryLenght = m * samples;
-        int haplotypesMemoryLenght = n * samples;
+        // Define needed memory
         int matrixElements = m * n * samples;
+        int readsElements = 2 * m * samples;
+        int allelesElements = 2 * n * samples;
 
-        CUdeviceptr priorMatrix = new CUdeviceptr();
-        cuMemAlloc(priorMatrix, matrixElements * Sizeof.FLOAT);
+        // Define BlockSize and GridSize
+        int blockSizeX = m;
+        int gridSizeX = (int) Math.ceil((double) reads.length / blockSizeX);
 
-        CUdeviceptr matchMatrix = new CUdeviceptr();
-        cuMemAlloc(matchMatrix, matrixElements * Sizeof.FLOAT);
+        // Inizialize device
+        cuda.inizialization();
+        cuda.setBlockSize(blockSizeX, 1, 1);
+        cuda.setGridSize(gridSizeX, 1, 1);
 
-        CUdeviceptr insertionMatrix = new CUdeviceptr();
-        cuMemAlloc(insertionMatrix, matrixElements * Sizeof.FLOAT);
+        // Set limit for possible prints by the kernel (this has debug purposes)
+        int limit = 20000;
+        cuda.setPrintLimit(limit);
 
-        CUdeviceptr deletionMatrix = new CUdeviceptr();
-        cuMemAlloc(deletionMatrix, matrixElements * Sizeof.FLOAT);
+        // Allocate memory for input values
+        CUdeviceptr readsPtr = cuda.allocateAndMoveArray(reads, readsElements, Sizeof.BYTE);
+        CUdeviceptr qualsPtr = cuda.allocateAndMoveArray(quals, readsElements, Sizeof.BYTE);
+        CUdeviceptr insPtr = cuda.allocateAndMoveArray(ins, readsElements, Sizeof.BYTE);
+        CUdeviceptr delsPtr = cuda.allocateAndMoveArray(dels, readsElements, Sizeof.BYTE);
+        CUdeviceptr gcpsPtr = cuda.allocateAndMoveArray(gcps, readsElements, Sizeof.BYTE);
+        CUdeviceptr allelesPtr = cuda.allocateAndMoveArray(alleles, allelesElements, Sizeof.BYTE);
 
+        // Allocate memory for matrices
+        CUdeviceptr matchPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
+        CUdeviceptr insertionPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
+        CUdeviceptr deletionPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
 
-        CUdeviceptr deviceInputReadBases = new CUdeviceptr();
-        cuMemAlloc(deviceInputReadBases, readsMemoryLenght * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputReadBases, Pointer.to(reads), readsMemoryLenght * Sizeof.CHAR);
+        // Allocate memory for output
+        CUdeviceptr outputPtr = cuda.allocateArray(reads.length, Sizeof.FLOAT);
 
-        CUdeviceptr deviceInputAlleleBases = new CUdeviceptr();
-        cuMemAlloc(deviceInputAlleleBases, haplotypesMemoryLenght * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputAlleleBases, Pointer.to(alleles), (alleles.length * Sizeof.CHAR));
-
-
-        CUdeviceptr deviceInputReadQuals = new CUdeviceptr();
-        cuMemAlloc(deviceInputReadQuals, readsMemoryLenght * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputReadQuals, Pointer.to(quals), readsMemoryLenght * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputInsQual = new CUdeviceptr();
-        cuMemAlloc(deviceInputInsQual, readsMemoryLenght * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputInsQual, Pointer.to(ins), readsMemoryLenght * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputDelQual = new CUdeviceptr();
-        cuMemAlloc(deviceInputDelQual, readsMemoryLenght * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputDelQual, Pointer.to(dels), readsMemoryLenght * Sizeof.CHAR);
-
-        CUdeviceptr deviceInputOverGCP = new CUdeviceptr();
-        cuMemAlloc(deviceInputOverGCP, readsMemoryLenght * Sizeof.CHAR);
-        cuMemcpyHtoD(deviceInputOverGCP, Pointer.to(gcps), readsMemoryLenght * Sizeof.CHAR);
-
-
-        CUdeviceptr deviceOutput = new CUdeviceptr();
-        cuMemAlloc(deviceOutput, (readsMemoryLenght * Sizeof.FLOAT));
-
-        Pointer kernelParameters = Pointer.to(
-                Pointer.to(deviceInputReadBases),
-                Pointer.to(deviceInputReadQuals),
-                Pointer.to(deviceInputInsQual),
-                Pointer.to(deviceInputDelQual),
-                Pointer.to(deviceInputOverGCP),
-                Pointer.to(deviceInputAlleleBases),
-                Pointer.to(priorMatrix),
-                Pointer.to(matchMatrix),
-                Pointer.to(insertionMatrix),
-                Pointer.to(deletionMatrix),
-                Pointer.to(deviceOutput),
-                Pointer.to(new int[]{samples}),
-                Pointer.to(new int[]{m}),
-                Pointer.to(new int[]{n}),
-                Pointer.to(new float[]{beta}),
-                Pointer.to(new float[]{epsilon})
-        );
-        if (readsMemoryLenght % 32 == 0) {
-            int blockSizeX = m;
-            int grizSizeX = (int) Math.ceil((double) readsMemoryLenght / blockSizeX);
-            //JCudaDriver.cuCtxSetLimit(CUlimit.CU_LIMIT_PRINTF_FIFO_SIZE, 8192);
-            cuLaunchKernel(function,
-                    grizSizeX, 1, 1,
-                    blockSizeX, 1, 1,
-                    0, null,
-                    kernelParameters, null
+        Pointer kernelParameters;
+        CUdeviceptr priorPtr;
+        if (debug_flag) {
+            priorPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
+            kernelParameters = Pointer.to(
+                    Pointer.to(readsPtr),
+                    Pointer.to(qualsPtr),
+                    Pointer.to(insPtr),
+                    Pointer.to(delsPtr),
+                    Pointer.to(gcpsPtr),
+                    Pointer.to(allelesPtr),
+                    Pointer.to(priorPtr),
+                    Pointer.to(matchPtr),
+                    Pointer.to(insertionPtr),
+                    Pointer.to(deletionPtr),
+                    Pointer.to(outputPtr),
+                    Pointer.to(new int[]{samples}),
+                    Pointer.to(new int[]{m}),
+                    Pointer.to(new int[]{n}),
+                    Pointer.to(new float[]{beta}),
+                    Pointer.to(new float[]{epsilon}),
+                    Pointer.to(new int[]{print})
             );
+        }
+        else {
+            kernelParameters = Pointer.to(
+                    Pointer.to(readsPtr),
+                    Pointer.to(qualsPtr),
+                    Pointer.to(insPtr),
+                    Pointer.to(delsPtr),
+                    Pointer.to(gcpsPtr),
+                    Pointer.to(allelesPtr),
+                    Pointer.to(matchPtr),
+                    Pointer.to(insertionPtr),
+                    Pointer.to(deletionPtr),
+                    Pointer.to(outputPtr),
+                    Pointer.to(new int[]{m}),
+                    Pointer.to(new int[]{n}),
+                    Pointer.to(new float[]{beta}),
+                    Pointer.to(new float[]{epsilon}));
+        }
 
+        if (true) {
+            // Launch Kernel
+            cuda.launchKernel(kernelParameters);
+
+            // Wait for finishing
             cuCtxSynchronize();
 
-            float[] output = new float[readsMemoryLenght];
-            cuMemcpyDtoH(Pointer.to(output), deviceOutput, readsMemoryLenght * Sizeof.FLOAT);
+            // Get the output
+            float[] output = new float[reads.length];
+            cuMemcpyDtoH(Pointer.to(output), outputPtr, (long) reads.length * Sizeof.FLOAT);
 
             float[] results = new float[samples];
 
             for (int j = 0; j < samples; j++) {
                 for (int i = 0; i < m; i++) {
-                    results[j] += output[n * j + i];
+                    int index = n * j + i;
+                    float o = output[index];
+                    results[j] += o;
                 }
             }
 
             return results;
 
         } else {
-            System.out.println("Invalid: readsMemoryLenght is " + readsMemoryLenght + "must be a multiple of 32");
+            System.out.println("Invalid: readsMemoryLenght is " + m + " must be a multiple of 32");
         }
 
         return new float[m];
     }
 
-
+/*
     private float[] calculatePairHMM2(char[] reads, float[] readsQual, float[] readsIn, float[] readsDel,
                                       float[] readsGCP,
                                       char[] haplotypes, float beta, float epsilon, int paddedMaxReadLength,
@@ -310,5 +258,6 @@ public class PairHMMGPUCustom {
 
         return new float[1];
     }
+    */
 }
 

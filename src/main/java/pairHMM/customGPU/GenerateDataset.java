@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class GenerateDataset {
-    
+
     private final int readLength;
     private final int alleleLength;
     private final int samples;
@@ -20,79 +20,14 @@ public class GenerateDataset {
     private char[][] ins;
     private char[][] dels;
     private char[][] gcps;
-    
-    private int paddedMaxReadLength;
-    private int paddedMaxHaplotypeLength;
-    
-    private boolean initialized;
 
-    public GenerateDataset(int readLength, int alleleLength, int samples){
+    private Utils utils = new Utils();
+
+    public GenerateDataset(int readLength, int alleleLength, int samples) {
         this.readLength = readLength;
         this.alleleLength = alleleLength;
         this.samples = samples;
     }
-
-    public int getReadLength() {
-        return readLength;
-    }
-
-    public char[][] getQuals() {
-        return quals;
-    }
-
-    public char[][] getIns() {
-        return ins;
-    }
-
-    public char[][] getDels() {
-        return dels;
-    }
-
-    public char[][] getGcps() {
-        return gcps;
-    }
-
-    public int getPaddedMaxReadLength() {
-        return paddedMaxReadLength;
-    }
-
-    public int getPaddedMaxHaplotypeLength() {
-        return paddedMaxHaplotypeLength;
-    }
-
-    public boolean isInitialized() {
-        return initialized;
-    }
-
-    public int getAlleleLength() {
-        return alleleLength;
-    }
-
-    public int getSamples() {
-        return samples;
-    }
-
-    public int getReadMaxLength() {
-        return readMaxLength;
-    }
-
-    public int getHaplotypeMaxLength() {
-        return haplotypeMaxLength;
-    }
-
-    public char[][] getReads() {
-        return reads;
-    }
-
-    public char[][] getHaplotypes() {
-        return haplotypes;
-    }
-
-    public Utils getUtils() {
-        return utils;
-    }
-
-    private Utils utils = new Utils();
 
     public void generate() {
         /* generation of 2 matrices containing reads and haplotypes */
@@ -128,10 +63,9 @@ public class GenerateDataset {
             this.quals = utils.copyAndPadByteMatrix(quals, x);
             this.gcps = utils.copyAndPadByteMatrix(gcps, x);
         }
-        this.paddedMaxReadLength = x;
 
         int y = haplotypeMaxLength;
-        
+
         if (y % 32 != 0) {
             int z = 0;
             while (y > 32) {
@@ -141,9 +75,6 @@ public class GenerateDataset {
             y = 32 * (z + 1);
             this.haplotypes = utils.copyAndPadByteMatrix(haplotypes, y);
         }
-        this.paddedMaxHaplotypeLength = y;
-
-        this.initialized = true;
     }
 
     public void saveDataset(String filename) {
@@ -161,7 +92,7 @@ public class GenerateDataset {
 
         try {
             FileWriter myWriter = new FileWriter(filename);
-            myWriter.write( samples + " " + samples + "\n");
+            myWriter.write(samples + " " + samples + "\n");
 
             for (int i = 0; i < samples; i++) {
                 myWriter.write(String.valueOf(reads[i]) + " " + String.valueOf(quals[i]) + " " +
@@ -171,7 +102,7 @@ public class GenerateDataset {
 
 
             for (int i = 0; i < samples; i++) {
-                myWriter.write(String.valueOf(haplotypes[i]) +  "\n");
+                myWriter.write(String.valueOf(haplotypes[i]) + "\n");
 
             }
 

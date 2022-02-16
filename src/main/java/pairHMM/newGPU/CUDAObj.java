@@ -1,9 +1,7 @@
 package pairHMM.newGPU;
 
 import jcuda.Pointer;
-import jcuda.Sizeof;
 import jcuda.driver.*;
-import pairHMM.newGPU.Kernel;
 
 import static jcuda.driver.CUaddress_mode.CU_TR_ADDRESS_MODE_WRAP;
 import static jcuda.driver.CUarray_format.CU_AD_FORMAT_FLOAT;
@@ -87,7 +85,7 @@ public class CUDAObj {
     public CUdeviceptr allocateAndMoveArray(char[] data, int i, int memoryDim) {
         CUdeviceptr pointer = new CUdeviceptr();
         cuMemAlloc(pointer, (long) i * memoryDim);
-        cuMemcpyHtoD(pointer, Pointer.to(data), i * memoryDim);
+        cuMemcpyHtoD(pointer, Pointer.to(data), (long) i * memoryDim);
 
         return pointer;
     }

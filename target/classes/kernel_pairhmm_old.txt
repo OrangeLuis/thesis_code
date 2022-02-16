@@ -1,8 +1,7 @@
 extern "C"
 #include <stdio.h>
 #include <math.h>
-__global__ void subComputation(char *reads, char *quals, char *ins, char *dels, char *gcps, char *alleles, float *match, float *insertion,
-                               float *deletion, float *out, int m, int n, float beta, float epsilon) {
+__global__ void subComputation(char *reads, char *quals, char *ins, char *dels, char *gcps, char *alleles, float *match, float *insertion, float *deletion, float *out, int m, int n, float beta, float epsilon) {
     //Thread index and components
     unsigned int x = threadIdx.x + blockIdx.x * blockDim.x;
     int a = threadIdx.x;
@@ -18,11 +17,6 @@ __global__ void subComputation(char *reads, char *quals, char *ins, char *dels, 
     insertion[f_index] = 0;
     if (first_column) deletion[f_index] = (float) 1 / n;
     else deletion[f_index] = 0; 
-    //Calculation of quality values 
-    float quals_x = (1 - pow(10, -((int) quals[x_index] - 33)/10));
-    float ins_x = (1 - pow(10, -(((int) ins[x_index] - 33)/10)));
-    float dels_x = (1 - pow(10, -(((int) dels[x_index] - 33)/10)));
-    float gcps_x = (1 - pow(10, -(((int) gcps[x_index] - 33)/10)));
     //Loop flowing through the column
     for(int i = -a + 1; i < n; i++) {
         //Allele index
@@ -48,13 +42,18 @@ __global__ void subComputation(char *reads, char *quals, char *ins, char *dels, 
                     int prevj_index = i * c + (a - 1) + b * n * m;
                     int previj_index = (i - 1) * c + (a - 1) + b * n * m;
                     //Prior calculation
-                    float pij;
+                    float pij = 0;
+                    //Calculation of quality values 
+                    float quals_x = (1 - pow(10, -((int) quals[x_index] - 33)/10));
+                    float ins_x = (1 - pow(10, -(((int) ins[x_index] - 33)/10)));
+                    float dels_x = (1 - pow(10, -(((int) dels[x_index] - 33)/10)));
+                    float gcps_x = (1 - pow(10, -(((int) gcps[x_index] - 33)/10)));
                     if(reads[x_index] == alleles[a_index]) {
                             pij = quals_x / 3;
                         }
                         else {
                             pij = 1 - quals_x;
-                        }                    
+                        }                  
                     match[ij_index] = pij * (ins_x * match[previj_index] + beta * insertion[previj_index] + beta * deletion[previj_index]);
                     insertion[ij_index] = dels_x * match[previ_index] + epsilon * insertion[previ_index];
                     deletion[ij_index] = gcps_x * match[prevj_index] + epsilon * deletion[prevj_index];

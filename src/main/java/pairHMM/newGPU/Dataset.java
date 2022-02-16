@@ -22,6 +22,10 @@ public class Dataset {
     private ArrayList<ArrayList<char[]>> gcps = new ArrayList<>();
     private ArrayList<ArrayList<char[]>> alleles = new ArrayList<>();
 
+    public void printDatasetName() {
+        System.out.println("Testing on: " + getName());
+    }
+
     private enum Type {
         Reads,
         Quals,

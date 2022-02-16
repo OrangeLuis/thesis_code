@@ -65,6 +65,9 @@ public class PairHMMGPUCustom {
         int limit = 20000;
         cuda.setPrintLimit(limit);
 
+        //Getting starting time
+        long start = System.currentTimeMillis();
+
         // Allocate memory for input values
         CUdeviceptr readsPtr = cuda.allocateAndMoveArray(reads, readsElements, Sizeof.BYTE);
         CUdeviceptr qualsPtr = cuda.allocateAndMoveArray(quals, readsElements, Sizeof.BYTE);
@@ -123,12 +126,24 @@ public class PairHMMGPUCustom {
                     Pointer.to(new float[]{epsilon}));
         }
 
+        // Getting time after data movement
+        long partial = System.currentTimeMillis();
+
         if (true) {
+
             // Launch Kernel
             cuda.launchKernel(kernelParameters);
 
             // Wait for finishing
             cuCtxSynchronize();
+
+            // Getting time after kernel
+            long after = System.currentTimeMillis();
+
+            //Print times
+            System.out.println("GPU TIME: " + (after - start));
+            System.out.println("DATA MOVEMENT TIME: " + (partial - start));
+            System.out.println("KERNEL COMPUTATION TIME: " + (after - partial));
 
             // Get the output
             float[] output = new float[reads.length];

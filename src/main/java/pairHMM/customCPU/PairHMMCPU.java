@@ -45,6 +45,7 @@ public class PairHMMCPU {
     }
 
     public float[] calculatePairHMM() {
+        long time = 0;
         if (((reads.length % samples) == 0) && ((alleles.length % samples) == 0)) {
             int x = samples;
             float[] results = new float[x];
@@ -55,6 +56,8 @@ public class PairHMMCPU {
                 char[] q = new char[m];
                 char[] o = new char[m];
                 char[] a = new char[n];
+
+
 
                 for (int k = 0; k < m; k++) {
                     //System.out.println("j, m, k, index: " + j + " " + m + " " + k + " " + (j * m + k));
@@ -79,10 +82,17 @@ public class PairHMMCPU {
                 System.out.println("a: " + String.valueOf(a) + "\n");
 
                  */
+                long partial = System.currentTimeMillis();
 
                 results[j] = subComputeReadLikelihoodGivenHaplotype(a, r, q, i, d, o, 0);
 
+                long ending = System.currentTimeMillis();
+
+                time += (ending - partial);
+
             }
+
+            System.out.println("CPU TIME: " + time);
             return results;
 
         } else {

@@ -12,9 +12,15 @@ import java.text.DecimalFormat;
 
 
 public class MainLoadDatasetAndCompareCustom {
-    public static final int print = -1;
+    //flag for debug
     public static final boolean debug_flag = false;
-    public static final int accuracy_level = 7;
+    //if debug, you can choose the thread to print
+    public static final int print = -1;
+    //select of how many decimal of accuracy
+    public static final int accuracy_level = 5;
+    //flag for print results
+    public static final boolean print_samples = false;
+
     public static void main(String[] args) {
         //String kernelName = "src\\main\\resources\\compiled_kernels\\subComputationOld.cubin";
         String kernelName = "src\\main\\resources\\compiled_kernels\\subComputationOldNoPrintsW.cubin";
@@ -22,7 +28,7 @@ public class MainLoadDatasetAndCompareCustom {
         //String filename = "test_data\\custom_dataset.txt";
         //String filename = "test_data\\deterministic_dataset.txt";
         //String filename = "test_data\\two_read_dataset.txt";
-        String filename = "test_data\\bigger_bigger_dataset.txt";
+        String filename = "test_data\\test_dataset.txt";
 
         Dataset dataset = new Dataset();
         dataset.readDataset(filename);
@@ -48,44 +54,31 @@ public class MainLoadDatasetAndCompareCustom {
 
         float[] gpuResults = pairHMM.calculatePairHMM();
 
-        if (cpuResults.length == samples && gpuResults.length == samples){
-            System.out.println("Result Length: OK\n");
-            System.out.println("PRINTING RESULTS\n");
-
-            /*
-            System.out.println("GPU RESULTS\n");
-            for (int j = 0; j < samples; j++) {
-                System.out.println("Result sample n°" + j + ": " + gppuResults[j]);
+        if (cpuResults.length == samples && gpuResults.length == samples) {
+            if (print_samples) {
+                System.out.println("Result Length: OK\n");
+                System.out.println("PRINTING RESULTS\n");
+                System.out.println("GPU VS CPU\n");
+                for (int j = 0; j < samples; j++) {
+                    System.out.println("Sample N°" + j + ": " + gpuResults[j] + " - " + cpuResults[j]);
+                }
+                System.out.println(" ");
             }
-
-            System.out.println("\nCPU RESULTS\n");
-            for (int j = 0; j < samples; j++) {
-                System.out.println("Result sample n°" + j + ": " + cpuResults[j]);
-            }
-            */
-
-            System.out.println("GPU VS CPU\n");
-            for (int j = 0; j < samples; j++) {
-                System.out.println("Sample N°" + j + ": " + gpuResults[j] + " - " + cpuResults[j]);
-            }
-
-            System.out.println(" ");
             boolean resCheck = true;
             for (int j = 0; j < samples; j++) {
                 DecimalFormat df = new DecimalFormat(Utils.getAccuracyFormat());
-                if (!df.format(cpuResults[j]).equals(df.format(gpuResults[j]))){
-                    System.out.println("SAMPLE N°" + j + " MISMATCH: " + df.format(gpuResults[j]) + " - " + df.format(cpuResults[j]));
+                if (!df.format(cpuResults[j]).equals(df.format(gpuResults[j]))) {
+                    if (print_samples)
+                        System.out.println("SAMPLE N°" + j + " MISMATCH: " + df.format(gpuResults[j]) + " - " + df.format(cpuResults[j]));
                     resCheck = false;
                 }
             }
 
             System.out.println("\nResCheck: " + resCheck + "\n");
 
-        }
-        else{
+        } else {
             System.out.println("Wrong Results Lenght, aborting.\n");
         }
-
 
 
     }

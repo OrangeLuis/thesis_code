@@ -11,6 +11,8 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
@@ -18,11 +20,6 @@
             <groupId>org.jcuda</groupId>
             <artifactId>jcuda</artifactId>
             <version>11.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jcuda</groupId>
-            <artifactId>jcuda</artifactId>
-            <version>11.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.jcuda</groupId>

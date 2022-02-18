@@ -9,24 +9,24 @@ import java.util.stream.Collectors;
 
 public class Dataset {
 
-    private String name;
-    private int samples;
+    protected String name;
+    protected int samples;
 
-    private ArrayList<String> utils = new ArrayList<>();
-    private ArrayList<char[]> dataset = new ArrayList<>();
+    protected ArrayList<String> utils = new ArrayList<>();
+    protected ArrayList<char[]> dataset = new ArrayList<>();
 
-    private ArrayList<ArrayList<char[]>> reads = new ArrayList<>();
-    private ArrayList<ArrayList<char[]>> quals = new ArrayList<>();
-    private ArrayList<ArrayList<char[]>> ins = new ArrayList<>();
-    private ArrayList<ArrayList<char[]>> dels = new ArrayList<>();
-    private ArrayList<ArrayList<char[]>> gcps = new ArrayList<>();
-    private ArrayList<ArrayList<char[]>> alleles = new ArrayList<>();
+    protected ArrayList<ArrayList<char[]>> reads = new ArrayList<>();
+    protected ArrayList<ArrayList<char[]>> quals = new ArrayList<>();
+    protected ArrayList<ArrayList<char[]>> ins = new ArrayList<>();
+    protected ArrayList<ArrayList<char[]>> dels = new ArrayList<>();
+    protected ArrayList<ArrayList<char[]>> gcps = new ArrayList<>();
+    protected ArrayList<ArrayList<char[]>> alleles = new ArrayList<>();
 
     public void printDatasetName() {
         System.out.println("Testing on: " + getName());
     }
 
-    private enum Type {
+    protected enum Type {
         Reads,
         Quals,
         Ins,
@@ -180,5 +180,4 @@ public class Dataset {
     public int getSamples() {
         return samples;
     }
-
 }

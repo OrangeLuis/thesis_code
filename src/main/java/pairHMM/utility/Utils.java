@@ -1,6 +1,6 @@
-package pairHMM;
+package pairHMM.utility;
 
-import static pairHMM.MainLoadDatasetAndCompareCustom.accuracy_level;
+import static main.MainLoadDatasetAndCompareCustom.accuracy_level;
 
 public class Utils {
     private static String format = "#.";

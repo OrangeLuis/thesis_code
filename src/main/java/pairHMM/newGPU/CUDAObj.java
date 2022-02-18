@@ -154,7 +154,7 @@ public class CUDAObj {
         // Create Array Descriptor
         CUDA_ARRAY_DESCRIPTOR ad = cuCreateAD(struct.length, 1, 1);
 
-        // Create Texture References for utility arrays
+        // Create Texture References for pairHMM.utility arrays
         cuCreateTR(ad, pointer, pPitch);
 
         return pointer;
@@ -173,7 +173,7 @@ public class CUDAObj {
         // Create Array Descriptor
         CUDA_ARRAY_DESCRIPTOR ad = cuCreateAD(struct.length, 1, 1);
 
-        // Create Texture References for utility arrays
+        // Create Texture References for pairHMM.utility arrays
         cuCreateTR(ad, pointer, pPitch);
 
         return pointer;

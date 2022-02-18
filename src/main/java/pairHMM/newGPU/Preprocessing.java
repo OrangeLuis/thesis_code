@@ -9,38 +9,40 @@ public class Preprocessing {
 
     Dataset dataset;
 
-    private final ArrayList<ArrayList<char[]>> arrayListsReads;
-    private final ArrayList<ArrayList<char[]>> arrayListsQuals;
-    private final ArrayList<ArrayList<char[]>> arrayListsIns;
-    private final ArrayList<ArrayList<char[]>> arrayListsDels;
-    private final ArrayList<ArrayList<char[]>> arrayListsGcps;
-    private final ArrayList<ArrayList<char[]>> arrayListsAlleles;
+    protected final ArrayList<ArrayList<char[]>> arrayListsReads;
+    protected final ArrayList<ArrayList<char[]>> arrayListsQuals;
+    protected final ArrayList<ArrayList<char[]>> arrayListsIns;
+    protected final ArrayList<ArrayList<char[]>> arrayListsDels;
+    protected final ArrayList<ArrayList<char[]>> arrayListsGcps;
+    protected final ArrayList<ArrayList<char[]>> arrayListsAlleles;
 
-    private final ArrayList<String> utils;
+    protected final ArrayList<String> utils;
 
-    private int readMaxLength;
-    private int alleleMaxLength;
-    private int paddedReadLength;
-    private int paddedAlleleLength;
+    protected int readMaxLength;
+    protected int alleleMaxLength;
+    protected int paddedReadLength;
+    protected int paddedAlleleLength;
 
-    private char[] reads;
-    private char[] quals;
-    private char[] ins;
-    private char[] dels;
-    private char[] gcps;
-    private char[] alleles;
+    protected char[] reads;
+    protected char[] quals;
+    protected char[] ins;
+    protected char[] dels;
+    protected char[] gcps;
+    protected char[] alleles;
 
-    private int[] nrb;
-    private int[] nab;
-    private int[] mrnb;
-    private int[] manb;
+    protected int[] nrb;
+    protected int[] nab;
+    protected int[] mrnb;
+    protected int[] manb;
 
-    private int samples;
-    private int oldSamples;
-    private int readSamples;
-    private int alleleSamples;
+    protected int samples;
+    protected int oldSamples;
+    protected int readSamples;
+    protected int alleleSamples;
 
-    private enum Type {
+
+
+    protected enum Type {
         Reads,
         Alleles
     }
@@ -134,7 +136,7 @@ public class Preprocessing {
         return manb;
     }
 
-    private void initialize() {
+    protected void initialize() {
         this.readMaxLength = findMaxLength(Type.Reads);
         this.alleleMaxLength = findMaxLength(Type.Alleles);
 
@@ -187,7 +189,7 @@ public class Preprocessing {
         this.calculatePercentage();
     }
 
-    private void setMrnbManb() {
+    protected void setMrnbManb() {
         int[] mrnb = new int[this.utils.size()];
         int[] manb = new int[this.utils.size()];
         for (int i = 0; i < this.utils.size(); i++) {
@@ -209,7 +211,7 @@ public class Preprocessing {
         this.manb = manb;
     }
 
-    private ArrayList<ArrayList<char[]>> padArray(ArrayList<ArrayList<char[]>> arrayLists, int[] mxnb) {
+    protected ArrayList<ArrayList<char[]>> padArray(ArrayList<ArrayList<char[]>> arrayLists, int[] mxnb) {
         ArrayList<ArrayList<char[]>> shallow = new ArrayList<>();
         int count = 0;
         for (ArrayList<char[]> arrayList : arrayLists) {
@@ -240,7 +242,7 @@ public class Preprocessing {
             return warpDim * (i/warpDim + 1);
     }
 
-    private int findMaxLength(Type type) {
+    protected int findMaxLength(Type type) {
         ArrayList<ArrayList<char[]>> arrayLists;
         if (type == Type.Reads)
             arrayLists = this.arrayListsReads;
@@ -259,7 +261,7 @@ public class Preprocessing {
         return max;
     }
 
-    private int checkMultiple(int maxLength) {
+    protected int checkMultiple(int maxLength) {
         if (maxLength % 32 == 0)
             return maxLength;
         else {
@@ -272,7 +274,7 @@ public class Preprocessing {
         }
     }
 
-    private void setNrbNab() {
+    protected void setNrbNab() {
         int[] nrb = new int[this.utils.size()];
         int[] nab = new int[this.utils.size()];
         int[] mrnb = new int[this.utils.size()];
@@ -290,7 +292,7 @@ public class Preprocessing {
         this.manb = manb;
     }
 
-    private char[] getLinearObject(ArrayList<ArrayList<char[]>> arrayLists) {
+    protected char[] getLinearObject(ArrayList<ArrayList<char[]>> arrayLists) {
         int size = 0;
         for (ArrayList<char[]> arrayList : arrayLists)
             for (char[] chars : arrayList)
@@ -329,7 +331,7 @@ public class Preprocessing {
         System.out.println(output);
     }
 
-    public void calculatePercentage() {
+    protected void calculatePercentage() {
 
         int countReads = 0;
         int countAlleles = 0;
@@ -349,7 +351,7 @@ public class Preprocessing {
         //System.out.println("Percentage of X in Alleles: " + ap + "\n");
     }
 
-    private void calculateSamples() {
+    protected void calculateSamples() {
         if (this.nrb.length == this.nab.length) {
             int samples = 0;
             int readSamples = 0;

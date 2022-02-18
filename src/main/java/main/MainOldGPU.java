@@ -1,4 +1,4 @@
-package pairHMM;
+package main;
 
 import pairHMM.customGPU.PairHMMGPUCustom;
 import pairHMM.newGPU.*;

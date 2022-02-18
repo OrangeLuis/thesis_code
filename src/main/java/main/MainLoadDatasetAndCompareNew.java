@@ -1,4 +1,4 @@
-package pairHMM;
+package main;
 
 public class MainLoadDatasetAndCompareNew {
 }

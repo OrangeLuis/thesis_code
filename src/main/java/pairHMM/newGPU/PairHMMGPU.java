@@ -90,7 +90,7 @@ public class PairHMMGPU {
         CUdeviceptr insertionPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
         CUdeviceptr deletionPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
 
-        // Create Texture Reference in memory for utility arrays
+        // Create Texture Reference in memory for pairHMM.utility arrays
         CUdeviceptr nrbPtr = cuda.createLinearTexture(nrb, Sizeof.FLOAT);
         CUdeviceptr nabPtr = cuda.createLinearTexture(nab, Sizeof.FLOAT);
         CUdeviceptr mrnbPtr = cuda.createLinearTexture(mrnb, Sizeof.FLOAT);

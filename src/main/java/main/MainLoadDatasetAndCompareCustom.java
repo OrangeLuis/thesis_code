@@ -1,5 +1,6 @@
-package pairHMM;
+package main;
 
+import pairHMM.utility.Utils;
 import pairHMM.customCPU.PairHMMCPU;
 import pairHMM.customGPU.PairHMMGPUCustom;
 import pairHMM.newGPU.CUDAObj;
@@ -7,7 +8,6 @@ import pairHMM.newGPU.Dataset;
 import pairHMM.newGPU.Kernel;
 import pairHMM.newGPU.Preprocessing;
 
-import javax.xml.crypto.Data;
 import java.text.DecimalFormat;
 
 
@@ -19,16 +19,16 @@ public class MainLoadDatasetAndCompareCustom {
     //select of how many decimal of accuracy
     public static final int accuracy_level = 5;
     //flag for print results
-    public static final boolean print_samples = false;
+    public static final boolean print_samples = true;
 
     public static void main(String[] args) {
-        //String kernelName = "src\\main\\resources\\compiled_kernels\\subComputationOld.cubin";
-        String kernelName = "src\\main\\resources\\compiled_kernels\\subComputationOldNoPrintsW.cubin";
+        //String kernelName = "src/main/resources/compiled_kernels/subComputationOld.cubin";
+        String kernelName = "src/main/resources/compiled_kernels/subComputationOldNoPrintsW.cubin";
         String functionName = "subComputation";
-        //String filename = "test_data\\custom_dataset.txt";
-        //String filename = "test_data\\deterministic_dataset.txt";
-        //String filename = "test_data\\two_read_dataset.txt";
-        String filename = "test_data\\test_dataset.txt";
+        //String filename = "test_data/custom_dataset.txt";
+        //String filename = "test_data/deterministic_dataset.txt";
+        //String filename = "test_data/two_read_dataset.txt";
+        String filename = "test_data/test_dataset.txt";
 
         Dataset dataset = new Dataset();
         dataset.readDataset(filename);

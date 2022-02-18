@@ -92,7 +92,7 @@ public class PairHMMGPU {
         CUdeviceptr deletionMatrix = new CUdeviceptr();
         cuMemAlloc(deletionMatrix, (long) matrixElements * Sizeof.FLOAT);
 
-        //Allocate memory for utility arrays and move to device
+        //Allocate memory for pairHMM.utility arrays and move to device
         CUdeviceptr nrbInputArray = new CUdeviceptr();
         cuMemAlloc(nrbInputArray, (long) nrb.length * Sizeof.FLOAT);
         cuMemcpyHtoD(nrbInputArray, Pointer.to(nrb), (long) nrb.length * Sizeof.FLOAT);

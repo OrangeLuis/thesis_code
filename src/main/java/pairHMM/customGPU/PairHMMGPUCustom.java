@@ -7,8 +7,8 @@ import pairHMM.newGPU.CUDAObj;
 import pairHMM.newGPU.Preprocessing;
 
 import static jcuda.driver.JCudaDriver.*;
-import static pairHMM.MainLoadDatasetAndCompareCustom.debug_flag;
-import static pairHMM.MainLoadDatasetAndCompareCustom.print;
+import static main.MainLoadDatasetAndCompareCustom.debug_flag;
+import static main.MainLoadDatasetAndCompareCustom.print;
 
 public class PairHMMGPUCustom {
 
@@ -153,7 +153,7 @@ public class PairHMMGPUCustom {
 
             for (int j = 0; j < samples; j++) {
                 for (int i = 0; i < m; i++) {
-                    int index = n * j + i;
+                    int index = m * j + i;
                     float o = output[index];
                     results[j] += o;
                 }

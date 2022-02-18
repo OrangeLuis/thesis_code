@@ -2,7 +2,7 @@ package pairHMM.customCPU;
 
 import pairHMM.newGPU.Preprocessing;
 
-import static pairHMM.MainLoadDatasetAndCompareCustom.print;
+import static main.MainLoadDatasetAndCompareCustom.print;
 
 public class PairHMMCPU {
 

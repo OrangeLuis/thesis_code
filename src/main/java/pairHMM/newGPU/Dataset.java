@@ -155,32 +155,18 @@ public class Dataset {
     }
 
     public void printSubDataset(Type type) {
-        switch (type) {
-            case Reads -> {
-                subPrintSubDataset(this.reads);
-                ;
-            }
-            case Quals -> {
-                subPrintSubDataset(this.quals);
-                ;
-            }
-            case Ins -> {
-                subPrintSubDataset(this.ins);
-                ;
-            }
-            case Dels -> {
-                subPrintSubDataset(this.dels);
-                ;
-            }
-            case Gcps -> {
-                subPrintSubDataset(this.gcps);
-                ;
-            }
-            case Alleles -> {
-                subPrintSubDataset(this.alleles);
-                ;
-            }
-        }
+        if (type == Type.Reads)
+            subPrintSubDataset(this.reads);
+        if (type == Type.Quals)
+            subPrintSubDataset(this.quals);
+        if (type == Type.Ins)
+            subPrintSubDataset(this.ins);
+        if (type == Type.Dels)
+            subPrintSubDataset(this.dels);
+        if (type == Type.Gcps)
+            subPrintSubDataset(this.gcps);
+        else
+            subPrintSubDataset(this.alleles);
     }
 
     private void subPrintSubDataset(ArrayList<ArrayList<char[]>> subDataset) {

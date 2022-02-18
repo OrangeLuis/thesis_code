@@ -156,12 +156,30 @@ public class Dataset {
 
     public void printSubDataset(Type type) {
         switch (type) {
-            case Reads -> subPrintSubDataset(this.reads);
-            case Quals -> subPrintSubDataset(this.quals);
-            case Ins -> subPrintSubDataset(this.ins);
-            case Dels -> subPrintSubDataset(this.dels);
-            case Gcps -> subPrintSubDataset(this.gcps);
-            case Alleles -> subPrintSubDataset(this.alleles);
+            case Reads -> {
+                subPrintSubDataset(this.reads);
+                ;
+            }
+            case Quals -> {
+                subPrintSubDataset(this.quals);
+                ;
+            }
+            case Ins -> {
+                subPrintSubDataset(this.ins);
+                ;
+            }
+            case Dels -> {
+                subPrintSubDataset(this.dels);
+                ;
+            }
+            case Gcps -> {
+                subPrintSubDataset(this.gcps);
+                ;
+            }
+            case Alleles -> {
+                subPrintSubDataset(this.alleles);
+                ;
+            }
         }
     }
 

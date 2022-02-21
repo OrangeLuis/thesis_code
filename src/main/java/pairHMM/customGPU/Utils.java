@@ -143,6 +143,7 @@ public class Utils {
         return h;
     }
 
+    /*
     public float[][] generateProbabilityMatrix(int num, int samples) {
         float[][] h = new float[samples][num];
 
@@ -155,6 +156,8 @@ public class Utils {
         }
         return h;
     }
+
+     */
 
     public int findMaxAlleleLength(char[][] haplotypes) {
         int x = 0;

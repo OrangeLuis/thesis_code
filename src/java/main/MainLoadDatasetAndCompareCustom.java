@@ -22,8 +22,8 @@ public class MainLoadDatasetAndCompareCustom {
     public static final boolean print_samples = true;
 
     public static void main(String[] args) {
-        //String kernelName = "src/main/resources/compiled_kernels/subComputationOld.cubin";
-        String kernelName = "src/main/resources/compiled_kernels/subComputationOldNoPrintsW.cubin";
+        //String kernelName = "src/resources/compiled_kernels/subComputationOld.cubin";
+        String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrintsW.cubin";
         String functionName = "subComputation";
         //String filename = "test_data/custom_dataset.txt";
         //String filename = "test_data/deterministic_dataset.txt";

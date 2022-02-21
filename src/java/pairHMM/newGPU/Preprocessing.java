@@ -1,7 +1,5 @@
 package pairHMM.newGPU;
 
-import pairHMM.newGPU.Dataset;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 

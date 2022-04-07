@@ -7,15 +7,6 @@ public class Preprocessing {
 
     Dataset dataset;
 
-    protected final ArrayList<ArrayList<char[]>> arrayListsReads;
-    protected final ArrayList<ArrayList<char[]>> arrayListsQuals;
-    protected final ArrayList<ArrayList<char[]>> arrayListsIns;
-    protected final ArrayList<ArrayList<char[]>> arrayListsDels;
-    protected final ArrayList<ArrayList<char[]>> arrayListsGcps;
-    protected final ArrayList<ArrayList<char[]>> arrayListsAlleles;
-
-    protected final ArrayList<String> utils;
-
     protected int readMaxLength;
     protected int alleleMaxLength;
     protected int paddedReadLength;
@@ -38,8 +29,6 @@ public class Preprocessing {
     protected int readSamples;
     protected int alleleSamples;
 
-
-
     protected enum Type {
         Reads,
         Alleles
@@ -47,15 +36,6 @@ public class Preprocessing {
 
     public Preprocessing(Dataset dataset) {
         this.dataset = dataset;
-
-        this.arrayListsReads = dataset.getReads();
-        this.arrayListsQuals = dataset.getQuals();
-        this.arrayListsIns = dataset.getIns();
-        this.arrayListsDels = dataset.getDels();
-        this.arrayListsGcps = dataset.getGcps();
-        this.arrayListsAlleles = dataset.getAlleles();
-
-        this.utils = dataset.getUtils();
         this.oldSamples = dataset.getSamples();
 
         this.initialize();
@@ -164,12 +144,12 @@ public class Preprocessing {
         this.paddedReadLength = readMaxLength;
         this.paddedAlleleLength = alleleMaxLength;
 
-        this.reads = getLinearObject(arrayListsReads);
-        this.quals = getLinearObject(arrayListsQuals);
-        this.ins = getLinearObject(arrayListsIns);
-        this.dels = getLinearObject(arrayListsDels);
-        this.gcps = getLinearObject(arrayListsGcps);
-        this.alleles = getLinearObject(arrayListsAlleles);
+        this.reads = getLinearObject(dataset.getReads());
+        this.quals = getLinearObject(dataset.getQuals());
+        this.ins = getLinearObject(dataset.getIns());
+        this.dels = getLinearObject(dataset.getDels());
+        this.gcps = getLinearObject(dataset.getGcps());
+        this.alleles = getLinearObject(dataset.getAlleles());
 
         /*
         this.paddedReadLength = checkMultiple(readMaxLength);
@@ -188,18 +168,18 @@ public class Preprocessing {
     }
 
     protected void setMrnbManb() {
-        int[] mrnb = new int[this.utils.size()];
-        int[] manb = new int[this.utils.size()];
-        for (int i = 0; i < this.utils.size(); i++) {
+        int[] mrnb = new int[dataset.getUtils().size()];
+        int[] manb = new int[dataset.getUtils().size()];
+        for (int i = 0; i < dataset.getUtils().size(); i++) {
             mrnb[i] = 0;
             manb[i] = 0;
 
-            for (char[] chars : arrayListsReads.get(i)) {
+            for (char[] chars : dataset.getReads().get(i)) {
                 if (chars.length > mrnb[i])
                     mrnb[i] = chars.length;
             }
 
-            for (char[] chars : arrayListsAlleles.get(i)) {
+            for (char[] chars : dataset.getAlleles().get(i)) {
                 if (chars.length > manb[i])
                     manb[i] = chars.length;
             }
@@ -243,9 +223,9 @@ public class Preprocessing {
     protected int findMaxLength(Type type) {
         ArrayList<ArrayList<char[]>> arrayLists;
         if (type == Type.Reads)
-            arrayLists = this.arrayListsReads;
+            arrayLists = dataset.getReads();
         else if (type == Type.Alleles)
-            arrayLists = this.arrayListsAlleles;
+            arrayLists = dataset.getAlleles();
         else {
             System.out.println("Error, cannot find the maximum lenght of the given type: " + type.toString());
             return -1;
@@ -273,12 +253,13 @@ public class Preprocessing {
     }
 
     protected void setNrbNab() {
-        int[] nrb = new int[this.utils.size()];
-        int[] nab = new int[this.utils.size()];
-        int[] mrnb = new int[this.utils.size()];
-        int[] manb = new int[this.utils.size()];
-        for (int i = 0; i < this.utils.size(); i++) {
-            int[] values = Arrays.stream(utils.get(i).split(" ")).mapToInt(Integer::parseInt).toArray();
+        int utilsSize = dataset.getUtils().size();
+        int[] nrb = new int[utilsSize];
+        int[] nab = new int[utilsSize];
+        int[] mrnb = new int[utilsSize];
+        int[] manb = new int[utilsSize];
+        for (int i = 0; i < utilsSize; i++) {
+            int[] values = Arrays.stream(dataset.getUtils().get(i).split(" ")).mapToInt(Integer::parseInt).toArray();
             nrb[i] = values[0];
             nab[i] = values[1];
             mrnb[i] = this.paddedReadLength;

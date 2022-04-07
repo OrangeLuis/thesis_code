@@ -25,12 +25,12 @@ public class PreprocessingMod extends Preprocessing {
         this.paddedAlleleLength = checkMultiple(alleleMaxLength);
 
 
-        this.reads = getLinearObject(padArray(arrayListsReads, Type.Reads));
-        this.quals = getLinearObject(padArray(arrayListsQuals, Type.Reads));
-        this.ins = getLinearObject(padArray(arrayListsIns, Type.Reads));
-        this.dels = getLinearObject(padArray(arrayListsDels, Type.Reads));
-        this.gcps = getLinearObject(padArray(arrayListsGcps, Type.Reads));
-        this.alleles = getLinearObject(padArray(arrayListsAlleles, Type.Alleles));
+        this.reads = getLinearObject(padArray(dataset.getReads(), Type.Reads));
+        this.quals = getLinearObject(padArray(dataset.getQuals(), Type.Reads));
+        this.ins = getLinearObject(padArray(dataset.getIns(), Type.Reads));
+        this.dels = getLinearObject(padArray(dataset.getDels(), Type.Reads));
+        this.gcps = getLinearObject(padArray(dataset.getGcps(), Type.Reads));
+        this.alleles = getLinearObject(padArray(dataset.getAlleles(), Type.Alleles));
 
         this.calculateSamples();
         this.calculatePercentage();
@@ -62,14 +62,14 @@ public class PreprocessingMod extends Preprocessing {
     private int getAbsoluteMultiple(Type type){
         int multiple = 32;
         if (type == Type.Reads)
-            for (ArrayList<char[]> arrayList : arrayListsReads) {
+            for (ArrayList<char[]> arrayList : dataset.getReads()) {
                 for (char[] chars : arrayList){
                     if (chars.length > multiple)
                     multiple = checkMultiple(chars.length);
             }
         }
         if (type == Type.Alleles)
-            for (ArrayList<char[]> arrayList : arrayListsAlleles) {
+            for (ArrayList<char[]> arrayList : dataset.getAlleles()) {
                 for (char[] chars : arrayList){
                     if (chars.length > multiple)
                         multiple = checkMultiple(chars.length);

@@ -17,7 +17,7 @@ public class MainLoadDatasetAndCompareCustom {
     //if debug, you can choose the thread to print
     public static final int print = -1;
     //select of how many decimal of accuracy
-    public static final int accuracy_level = 5;
+    public static final int accuracy_level = 6;
     //flag for print results
     public static final boolean print_samples = true;
 
@@ -28,7 +28,7 @@ public class MainLoadDatasetAndCompareCustom {
         //String filename = "test_data/custom_dataset.txt";
         //String filename = "test_data/deterministic_dataset.txt";
         //String filename = "test_data/two_read_dataset.txt";
-        String filename = "test_data/test_dataset.txt";
+        String filename = "test_data/longer_dataset.txt";
 
         Dataset dataset = new Dataset();
         dataset.readDataset(filename);

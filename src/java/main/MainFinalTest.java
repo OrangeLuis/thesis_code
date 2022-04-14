@@ -22,8 +22,6 @@ public class MainFinalTest {
         Integer iterationsNumber = 15;
         Utils.setAccuracyFormat();
 
-        //Set up output files
-
         //Kernel obj
         Kernel kernel = new Kernel(kernelName, functionName);
         //CudaObj obj

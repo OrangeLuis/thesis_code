@@ -93,7 +93,7 @@ public class PairHMMGPUCustom {
         CUdeviceptr outputPtr = cuda.allocateArray(reads.length, Sizeof.FLOAT);
 
         Pointer kernelParameters;
-        CUdeviceptr priorPtr;
+        CUdeviceptr priorPtr = null;
         if (debug_flag) {
             priorPtr = cuda.allocateArray(matrixElements, Sizeof.FLOAT);
             kernelParameters = Pointer.to(
@@ -186,6 +186,18 @@ public class PairHMMGPUCustom {
                     results[j] += o;
                 }
             }
+
+            cuMemFree(readsPtr);
+            cuMemFree(allelesPtr);
+            cuMemFree(qualsPtr);
+            cuMemFree(gcpsPtr);
+            cuMemFree(insPtr);
+            cuMemFree(delsPtr);
+            cuMemFree(matchPtr);
+            cuMemFree(deletionPtr);
+            cuMemFree(insertionPtr);
+            cuMemFree(priorPtr);
+            cuMemFree(outputPtr);
 
             return results;
 

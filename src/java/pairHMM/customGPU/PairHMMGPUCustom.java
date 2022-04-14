@@ -196,8 +196,10 @@ public class PairHMMGPUCustom {
             cuMemFree(matchPtr);
             cuMemFree(deletionPtr);
             cuMemFree(insertionPtr);
-            cuMemFree(priorPtr);
             cuMemFree(outputPtr);
+
+            if (priorPtr != null)
+                cuMemFree(priorPtr);
 
             return results;
 

@@ -19,7 +19,7 @@ public class MainFinalTest {
         //Setting up kernel input
         String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrints86.cubin";
         String functionName = "subComputation";
-        Integer iterationsNumber = 100;
+        Integer iterationsNumber = 15;
         Utils.setAccuracyFormat();
 
         //Set up output files
@@ -29,9 +29,11 @@ public class MainFinalTest {
         //CudaObj obj
         CUDAObj cuda = new CUDAObj(kernel);
 
+        /*
         //Test 10s
         String dataset1 = "test_data/10s.txt";
         singleBenchmark("10s", dataset1, iterationsNumber, cuda);
+        */
 
         //Test longer-reads
         String dataset2 = "test_data/longer-reads.txt";

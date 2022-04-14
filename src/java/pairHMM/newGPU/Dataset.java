@@ -21,6 +21,7 @@ public class Dataset {
     protected ArrayList<ArrayList<char[]>> dels = new ArrayList<>();
     protected ArrayList<ArrayList<char[]>> gcps = new ArrayList<>();
     protected ArrayList<ArrayList<char[]>> alleles = new ArrayList<>();
+    protected  String simpleName;
 
     public void printDatasetName() {
         System.out.println("Testing on: " + getName());

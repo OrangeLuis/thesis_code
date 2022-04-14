@@ -8,17 +8,18 @@ import pairHMM.newGPU.Kernel;
 import pairHMM.newGPU.Preprocessing;
 import pairHMM.utility.Utils;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 import static main.MainLoadDatasetAndCompareCustom.print_samples;
 
 public class MainFinalTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         //Setting up kernel input
-        String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrintsW.cubin";
+        String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrints86.cubin";
         String functionName = "subComputation";
-        Integer iterationsNumber = 1;
+        Integer iterationsNumber = 100;
         Utils.setAccuracyFormat();
 
         //Set up output files
@@ -46,8 +47,8 @@ public class MainFinalTest {
 
     }
 
-    public static void singleBenchmark(String datasetName, String datasetPath, Integer iterationsNumber, CUDAObj cuda){
-        System.out.println("\nBenchmark" + datasetName + ": " + iterationsNumber + " iterations\n");
+    public static void singleBenchmark(String datasetName, String datasetPath, Integer iterationsNumber, CUDAObj cuda) throws IOException {
+        System.out.println("\nBenchmark " + datasetName + ": " + iterationsNumber + " iterations\n");
 
         Dataset dataset = new Dataset();
         dataset.readDataset(datasetPath);
@@ -55,14 +56,14 @@ public class MainFinalTest {
 
         Preprocessing prep = new Preprocessing(dataset);
 
+        PairHMMCPU cpu = new PairHMMCPU(prep, samples, datasetName);
+        float[] cpuRes = cpu.calculatePairHMM();
+
         for (int i = 0; i < iterationsNumber; i++) {
 
             System.out.println("Iteration " + i);
 
-            PairHMMCPU cpu = new PairHMMCPU(prep, samples);
-            float[] cpuRes = cpu.calculatePairHMM();
-
-            PairHMMGPUCustom gpu = new PairHMMGPUCustom(prep, cuda);
+            PairHMMGPUCustom gpu = new PairHMMGPUCustom(prep, cuda, datasetName);
             float[] gpuRes = gpu.calculatePairHMM();
 
             boolean resCheck = true;

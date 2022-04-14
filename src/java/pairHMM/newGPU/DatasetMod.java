@@ -29,6 +29,7 @@ public class DatasetMod extends Dataset {
     @Override
     public void readDataset(String datasetName) {
         this.name = datasetName;
+        this.simpleName = name;
         BufferedReader reader;
         try {
             reader = new BufferedReader(new FileReader(name));

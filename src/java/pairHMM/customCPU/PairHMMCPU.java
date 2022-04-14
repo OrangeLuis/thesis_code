@@ -2,6 +2,10 @@ package pairHMM.customCPU;
 
 import pairHMM.newGPU.Preprocessing;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import static main.MainLoadDatasetAndCompareCustom.print;
 
 public class PairHMMCPU {
@@ -23,7 +27,11 @@ public class PairHMMCPU {
     private final float[][] insertionMatrix;
     private final float[][] deletionMatrix;
 
-    public PairHMMCPU(Preprocessing prep, int samples) {
+    private final String name;
+
+    public PairHMMCPU(Preprocessing prep, int samples, String datasetName) {
+
+        this.name = datasetName;
 
         this.reads = prep.getReads();
         this.alleles = prep.getAlleles();
@@ -44,7 +52,7 @@ public class PairHMMCPU {
 
     }
 
-    public float[] calculatePairHMM() {
+    public float[] calculatePairHMM() throws IOException {
         long time = 0;
         if (((reads.length % samples) == 0) && ((alleles.length % samples) == 0)) {
             int x = samples;
@@ -90,6 +98,18 @@ public class PairHMMCPU {
 
                 time += (ending - partial);
 
+            }
+
+            BufferedWriter out = null;
+            try {
+                out = new BufferedWriter(new FileWriter("output/results.txt", true));
+                out.write("cpu," + name + "," + time +"\n");
+            } catch (IOException e) {
+                // errore
+            } finally {
+                if (out != null) {
+                    out.close();
+                }
             }
 
             System.out.println("CPU TIME: " + time);

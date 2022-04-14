@@ -6,6 +6,10 @@ import jcuda.driver.*;
 import pairHMM.newGPU.CUDAObj;
 import pairHMM.newGPU.Preprocessing;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import static jcuda.driver.JCudaDriver.*;
 import static main.MainLoadDatasetAndCompareCustom.debug_flag;
 import static main.MainLoadDatasetAndCompareCustom.print;
@@ -26,7 +30,11 @@ public class PairHMMGPUCustom {
     private final char[] dels;
     private final char[] gcps;
 
-    public PairHMMGPUCustom(Preprocessing prep, CUDAObj cuda) {
+    private final String name;
+
+    public PairHMMGPUCustom(Preprocessing prep, CUDAObj cuda, String datasetName) {
+
+        this.name = datasetName;
         this.cuda = cuda;
 
         this.reads = prep.getReads();
@@ -43,7 +51,7 @@ public class PairHMMGPUCustom {
 
     }
 
-    public float[] calculatePairHMM() {
+    public float[] calculatePairHMM() throws IOException {
         float beta = (float) 0.9;
         float epsilon = 1 - beta;
 
@@ -149,9 +157,24 @@ public class PairHMMGPUCustom {
             long after_output = System.currentTimeMillis();
 
             //Print times
-            System.out.println("GPU TIME: " + (after_output - start));
-            System.out.println("DATA MOVEMENT TIME: " + (partial - start + after_output - after));
-            System.out.println("KERNEL COMPUTATION TIME: " + (after - partial));
+            long gpuTime = after_output - start;
+            long dataMovementTime = partial - start + after_output - after;
+            long kernelComputationTime = after - partial;
+            System.out.println("GPU TIME: " + gpuTime);
+            System.out.println("DATA MOVEMENT TIME: " + dataMovementTime);
+            System.out.println("KERNEL COMPUTATION TIME: " + kernelComputationTime);
+
+            BufferedWriter out = null;
+            try {
+                out = new BufferedWriter(new FileWriter("output/results.txt", true));
+                out.write("gpu," + name + "," + gpuTime + "," + dataMovementTime + "," + kernelComputationTime +"\n");
+            } catch (IOException e) {
+                // errore
+            } finally {
+                if (out != null) {
+                    out.close();
+                }
+            }
 
 
             float[] results = new float[samples];

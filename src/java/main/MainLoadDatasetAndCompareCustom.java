@@ -8,6 +8,7 @@ import pairHMM.newGPU.Dataset;
 import pairHMM.newGPU.Kernel;
 import pairHMM.newGPU.Preprocessing;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 
@@ -21,14 +22,15 @@ public class MainLoadDatasetAndCompareCustom {
     //flag for print results
     public static final boolean print_samples = true;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         //String kernelName = "src/resources/compiled_kernels/subComputationOld.cubin";
-        String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrintsW.cubin";
+        String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrints86.cubin";
         String functionName = "subComputation";
         //String filename = "test_data/custom_dataset.txt";
         //String filename = "test_data/deterministic_dataset.txt";
         //String filename = "test_data/two_read_dataset.txt";
-        String filename = "test_data/longer_dataset.txt";
+        String filename = "test_data/larger-dataset.txt";
+        String datasetName = "gg";
 
         Dataset dataset = new Dataset();
         dataset.readDataset(filename);
@@ -45,10 +47,10 @@ public class MainLoadDatasetAndCompareCustom {
 
         CUDAObj cuda = new CUDAObj(kernel);
 
-        PairHMMCPU pairHMMCPU = new PairHMMCPU(prep, dataset.getSamples());
+        PairHMMCPU pairHMMCPU = new PairHMMCPU(prep, dataset.getSamples(), "name");
         float[] cpuResults = pairHMMCPU.calculatePairHMM();
 
-        PairHMMGPUCustom pairHMM = new PairHMMGPUCustom(prep, cuda);
+        PairHMMGPUCustom pairHMM = new PairHMMGPUCustom(prep, cuda, "name");
         //prep.printLinearObject(prep.getReads(), "Reads", prep.getPaddedReadLength(), 2);
         //prep.printLinearObject(prep.getAlleles(), "Alleles", prep.getPaddedAlleleLength(), 2);
 

@@ -4,6 +4,7 @@ import pairHMM.customGPU.PairHMMGPUCustom;
 import pairHMM.newGPU.*;
 import pairHMM.utility.Utils;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class MainOldGPU {
@@ -16,7 +17,7 @@ public class MainOldGPU {
     //flag for print results
     public static final boolean print_samples = true;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         //String kernelName = "src/resources/compiled_kernels/subComputationOld.cubin";
         String kernelName = "src/resources/compiled_kernels/subComputationOldNoPrintsW.cubin";
         String functionName = "subComputation";
@@ -40,7 +41,7 @@ public class MainOldGPU {
 
         CUDAObj cuda = new CUDAObj(kernel);
 
-        PairHMMGPUCustom pairHMM = new PairHMMGPUCustom(prep, cuda);
+        PairHMMGPUCustom pairHMM = new PairHMMGPUCustom(prep, cuda, "gg");
         //prep.printLinearObject(prep.getReads(), "Reads", prep.getPaddedReadLength(), 2);
         //prep.printLinearObject(prep.getAlleles(), "Alleles", prep.getPaddedAlleleLength(), 2);
 

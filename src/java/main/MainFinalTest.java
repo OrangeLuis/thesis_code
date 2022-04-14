@@ -29,11 +29,10 @@ public class MainFinalTest {
         //CudaObj obj
         CUDAObj cuda = new CUDAObj(kernel);
 
-        /*
         //Test 10s
         String dataset1 = "test_data/10s.txt";
         singleBenchmark("10s", dataset1, iterationsNumber, cuda);
-        */
+
 
         //Test longer-reads
         String dataset2 = "test_data/longer-reads.txt";
